@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Álvaro Rohde García - CV</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Álvaro Rohde García</h1>
+    <p>Industrial Engineering · Optimization · Sustainability</p>
+  </header>
+
+  <section>
+    <h2>Experience</h2>
+    <ul>
+      <li><strong>Bosch</strong> — Engineering Intern</li>
+      <li><strong>Freelance</strong> — Math Tutor</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Education</h2>
+    <ul>
+      <li><strong>TU Braunschweig</strong> — M.Sc. Industrial Engineering</li>
+      <li><strong>Abitur</strong> — 1.7 GPA</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Skills</h2>
+    <p>Python, Excel, Optimization, Data Analysis, Project Management</p>
+  </section>
+
+  <section>
+    <h2>Contact</h2>
+    <p>Email: <a href="mailto:your@email.com">your@email.com</a></p>
+    <p>LinkedIn: <a href="https://www.linkedin.com/in/yourprofile" target="_blank">linkedin.com/in/yourprofile</a></p>
+  </section>
+
+  <footer>
+    <p>Download CV: <a href="cv.pdf" target="_blank">PDF Version</a></p>
+  </footer>
+</body>
+</html>
