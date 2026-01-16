@@ -1,106 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>LIFE — Lifetime Projection</title>
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #111;
-      color: #eee;
-      max-width: 900px;
-      margin: auto;
-      padding: 40px;
-    }
+<meta charset="UTF-8">
+<title>LIFE — A Lifetime Timeline</title>
 
-    h1 {
-      text-align: center;
-    }
+<style>
+body {
+  font-family: system-ui, sans-serif;
+  background: #111;
+  color: #eee;
+  max-width: 900px;
+  margin: auto;
+  padding: 40px;
+}
 
-    p {
-      text-align: center;
-      color: #aaa;
-    }
+h1, p {
+  text-align: center;
+}
 
-    .inputs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-top: 30px;
-    }
+.inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 30px;
+}
 
-    label {
-      display: flex;
-      flex-direction: column;
-      font-size: 14px;
-    }
+label {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+}
 
-    input {
-      margin-top: 6px;
-      padding: 6px;
-      background: #222;
-      color: #fff;
-      border: 1px solid #333;
-    }
+input {
+  margin-top: 6px;
+  padding: 6px;
+  background: #222;
+  color: #fff;
+  border: 1px solid #333;
+}
 
-    button {
-      margin-top: 30px;
-      padding: 12px;
-      width: 100%;
-      font-size: 16px;
-      background: #fff;
-      color: #000;
-      border: none;
-      cursor: pointer;
-    }
+button {
+  margin-top: 20px;
+  padding: 12px;
+  width: 100%;
+  font-size: 16px;
+  background: #fff;
+  color: #000;
+  border: none;
+  cursor: pointer;
+}
 
-    #lifeBar {
-      display: flex;
-      height: 50px;
-      margin-top: 40px;
-      border-radius: 6px;
-      overflow: hidden;
-    }
+#timeline {
+  display: flex;
+  height: 50px;
+  margin-top: 40px;
+  border-radius: 6px;
+  overflow: hidden;
+}
 
-    .segment {
-      height: 100%;
-    }
+.segment {
+  height: 100%;
+}
 
-    .legend {
-      margin-top: 20px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      font-size: 13px;
-    }
+#stepText {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 16px;
+}
 
-    .legend div {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
+.legend {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  font-size: 13px;
+}
 
-    .color {
-      width: 14px;
-      height: 14px;
-    }
+.legend div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 
-    #insights {
-      margin-top: 30px;
-      font-size: 15px;
-      line-height: 1.6;
-    }
-  </style>
+.color {
+  width: 14px;
+  height: 14px;
+}
+</style>
 </head>
 
 <body>
 
 <h1>LIFE</h1>
-<p>Projected allocation of your entire lifetime (age 0 → 80)</p>
+<p>Watch your remaining lifetime disappear</p>
 
 <div class="inputs">
   <label>Current age
     <input id="age" type="number" value="25">
+  </label>
+
+  <label>Retirement age
+    <input id="retire" type="number" value="67">
   </label>
 
   <label>Age started working
@@ -122,147 +122,126 @@
   <label>Screen time (hours/day)
     <input id="screen" type="number" step="0.1" value="4">
   </label>
-
-  <label>Exercise (hours/day)
-    <input id="exercise" type="number" step="0.1" value="0.5">
-  </label>
-
-  <label>Hobbies / leisure (hours/day)
-    <input id="hobby" type="number" step="0.1" value="2">
-  </label>
 </div>
 
-<button onclick="calculate()">Project My Life</button>
+<button onclick="nextStep()">Next</button>
 
-<div id="lifeBar"></div>
+<div id="timeline"></div>
+<div id="stepText"></div>
 <div class="legend" id="legend"></div>
-<div id="insights"></div>
 
 <script>
-function calculate() {
+const LIFE_EXPECTANCY = 80;
+let step = 0;
 
-  const LIFE_EXPECTANCY = 80;
-  const RETIREMENT_AGE = 67;
+function nextStep() {
+  step++;
+  render();
+}
+
+function render() {
 
   const age = +ageInput.value;
+  const retire = +retireInput.value;
   const startWork = +startWorkInput.value;
   const sleep = +sleepInput.value;
   const work = +workInput.value;
   const commute = +commuteInput.value;
   const screen = +screenInput.value;
-  const exercise = +exerciseInput.value;
-  const hobby = +hobbyInput.value;
 
-  const totalLifeHours = LIFE_EXPECTANCY * 365 * 24;
+  const totalLifeYears = LIFE_EXPECTANCY;
+  let remainingYears = LIFE_EXPECTANCY - age;
 
-  // ASSUMED DAILY TIMES
-  const toilet = 0.75;
-  const hygiene = 0.5;
-  const cooking = 1.5;
-  const chores = 0.5;
+  const segments = [];
 
-  // YEAR SPANS
-  const workYears = Math.max(RETIREMENT_AGE - startWork, 0);
-  const screenYears = Math.max(LIFE_EXPECTANCY - 18, 0);
-  const remainingYears = Math.max(LIFE_EXPECTANCY - age, 0);
+  // STEP 0 — Full life
+  segments.push({ name: "Life", years: totalLifeYears, color: "#333" });
+  let description = "This is your entire life from birth to age 80.";
 
-  const categories = [
-    {
-      name: "Sleep",
-      hours: LIFE_EXPECTANCY * 365 * sleep,
-      color: "#7b61ff"
-    },
-    {
-      name: "Work",
-      hours: workYears * 52 * work,
-      color: "#555"
-    },
-    {
-      name: "Commute",
-      hours: workYears * 52 * commute * 5,
-      color: "#ff8c00"
-    },
-    {
-      name: "Screen",
-      hours: screenYears * 365 * screen,
-      color: "#4aa3ff"
-    },
-    {
-      name: "Exercise",
-      hours: remainingYears * 365 * exercise,
-      color: "#4caf50"
-    },
-    {
-      name: "Hobbies",
-      hours: remainingYears * 365 * hobby,
-      color: "#00bcd4"
-    },
-    {
-      name: "Toilet",
-      hours: LIFE_EXPECTANCY * 365 * toilet,
-      color: "#c19a6b"
-    },
-    {
-      name: "Hygiene",
-      hours: LIFE_EXPECTANCY * 365 * hygiene,
-      color: "#f48fb1"
-    },
-    {
-      name: "Cooking",
-      hours: LIFE_EXPECTANCY * 365 * cooking,
-      color: "#ffd54f"
-    },
-    {
-      name: "Chores",
-      hours: LIFE_EXPECTANCY * 365 * chores,
-      color: "#795548"
-    }
-  ];
+  if (step >= 1) {
+    segments.length = 0;
+    segments.push({ name: "Lived", years: age, color: "#444" });
+    segments.push({ name: "Remaining", years: remainingYears, color: "#ffd700" });
+    description = "This is how much life you have left.";
+  }
 
-  const used = categories.reduce((s, c) => s + c.hours, 0);
+  if (step >= 2) {
+    const sleepYears = (sleep * 365 * LIFE_EXPECTANCY) / (24 * 365);
+    remainingYears -= sleepYears;
+    segments.push({ name: "Sleep", years: sleepYears, color: "#7b61ff" });
+    description = "This is how much of your life will be spent sleeping.";
+  }
 
-  categories.push({
-    name: "Free Time",
-    hours: Math.max(totalLifeHours - used, 0),
-    color: "#ffd700"
-  });
+  if (step >= 3) {
+    const workYears = Math.max(retire - startWork, 0);
+    const workTimeYears = (workYears * 52 * work) / (24 * 365);
+    const commuteYears = (workYears * 52 * commute * 5) / (24 * 365);
 
-  // RENDER
-  lifeBar.innerHTML = "";
+    remainingYears -= (workTimeYears + commuteYears);
+
+    segments.push({ name: "Work", years: workTimeYears, color: "#555" });
+    segments.push({ name: "Commute", years: commuteYears, color: "#ff8c00" });
+
+    description = "Work and commuting consume this much of your life.";
+  }
+
+  if (step >= 4) {
+    const screenYears = ((LIFE_EXPECTANCY - 18) * 365 * screen) / (24 * 365);
+    remainingYears -= screenYears;
+    segments.push({ name: "Screen", years: screenYears, color: "#4aa3ff" });
+    description = "Screens quietly take this portion of your lifetime.";
+  }
+
+  if (step >= 5) {
+    const hygiene = 0.5;
+    const toilet = 0.75;
+    const cooking = 1.5;
+    const chores = 0.5;
+
+    const routineYears =
+      ((hygiene + toilet + cooking + chores) * 365 * LIFE_EXPECTANCY) / (24 * 365);
+
+    remainingYears -= routineYears;
+
+    segments.push({ name: "Daily routines", years: routineYears, color: "#795548" });
+    description = "Invisible routines add up to years of your life.";
+  }
+
+  if (step >= 6) {
+    segments.push({ name: "Free Time", years: Math.max(remainingYears, 0), color: "#00e676" });
+    description = "This is what truly remains.";
+  }
+
+  draw(segments, description);
+}
+
+function draw(segments, text) {
+  timeline.innerHTML = "";
   legend.innerHTML = "";
 
-  categories.forEach(c => {
-    const percent = (c.hours / totalLifeHours) * 100;
+  segments.forEach(s => {
+    const div = document.createElement("div");
+    div.className = "segment";
+    div.style.width = (s.years / LIFE_EXPECTANCY) * 100 + "%";
+    div.style.background = s.color;
+    timeline.appendChild(div);
 
-    const seg = document.createElement("div");
-    seg.className = "segment";
-    seg.style.width = percent + "%";
-    seg.style.background = c.color;
-    lifeBar.appendChild(seg);
-
-    const leg = document.createElement("div");
-    leg.innerHTML = `<span class="color" style="background:${c.color}"></span>
-                     ${c.name} (${percent.toFixed(1)}%)`;
-    legend.appendChild(leg);
+    const l = document.createElement("div");
+    l.innerHTML = `<span class="color" style="background:${s.color}"></span>
+                   ${s.name} (${s.years.toFixed(1)} yrs)`;
+    legend.appendChild(l);
   });
 
-  insights.innerHTML = `
-    <p>Assuming you live to <strong>80</strong>, you will sleep for <strong>${(categories[0].hours/24/365).toFixed(1)}</strong> years.</p>
-    <p>You will work for <strong>${(categories[1].hours/24/365).toFixed(1)}</strong> years.</p>
-    <p>You will commute for <strong>${(categories[2].hours/24/365).toFixed(1)}</strong> years.</p>
-    <p>You will spend <strong>${(categories[3].hours/24/365).toFixed(1)}</strong> years on screens.</p>
-    <p>Your remaining free time is <strong>${((categories.at(-1).hours/totalLifeHours)*100).toFixed(1)}%</strong> of your life.</p>
-  `;
+  stepText.textContent = text;
 }
 
 const ageInput = document.getElementById("age");
+const retireInput = document.getElementById("retire");
 const startWorkInput = document.getElementById("startWork");
 const sleepInput = document.getElementById("sleep");
 const workInput = document.getElementById("work");
 const commuteInput = document.getElementById("commute");
 const screenInput = document.getElementById("screen");
-const exerciseInput = document.getElementById("exercise");
-const hobbyInput = document.getElementById("hobby");
 </script>
 
 </body>
