@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>LIFE — A Lifetime Timeline</title>
+<title>LIFE — Time Erosion</title>
 
 <style>
 body {
@@ -92,7 +92,7 @@ button {
 <body>
 
 <h1>LIFE</h1>
-<p>Watch your remaining lifetime disappear</p>
+<p>Time doesn’t add up. It disappears.</p>
 
 <div class="inputs">
   <label>Current age
@@ -139,6 +139,10 @@ function nextStep() {
   render();
 }
 
+function yearsFromHours(hours) {
+  return hours / (24 * 365);
+}
+
 function render() {
 
   const age = +ageInput.value;
@@ -149,67 +153,77 @@ function render() {
   const commute = +commuteInput.value;
   const screen = +screenInput.value;
 
-  const totalLifeYears = LIFE_EXPECTANCY;
-  let remainingYears = LIFE_EXPECTANCY - age;
+  let remaining = LIFE_EXPECTANCY - age;
 
-  const segments = [];
+  const segments = [
+    { name: "Lived", years: age, color: "#444" }
+  ];
 
-  // STEP 0 — Full life
-  segments.push({ name: "Life", years: totalLifeYears, color: "#333" });
-  let description = "This is your entire life from birth to age 80.";
+  let description = "This is your remaining lifetime.";
 
   if (step >= 1) {
-    segments.length = 0;
-    segments.push({ name: "Lived", years: age, color: "#444" });
-    segments.push({ name: "Remaining", years: remainingYears, color: "#ffd700" });
-    description = "This is how much life you have left.";
+    segments.push({ name: "Remaining", years: remaining, color: "#ffd700" });
   }
 
   if (step >= 2) {
-    const sleepYears = (sleep * 365 * LIFE_EXPECTANCY) / (24 * 365);
-    remainingYears -= sleepYears;
-    segments.push({ name: "Sleep", years: sleepYears, color: "#7b61ff" });
-    description = "This is how much of your life will be spent sleeping.";
+    const sleepYears = yearsFromHours(sleep * 365 * LIFE_EXPECTANCY);
+    remaining -= sleepYears;
+    segments.splice(1, 1,
+      { name: "Sleep", years: sleepYears, color: "#7b61ff" },
+      { name: "Remaining", years: remaining, color: "#ffd700" }
+    );
+    description = "Sleep is the first thing taken away.";
   }
 
   if (step >= 3) {
     const workYears = Math.max(retire - startWork, 0);
-    const workTimeYears = (workYears * 52 * work) / (24 * 365);
-    const commuteYears = (workYears * 52 * commute * 5) / (24 * 365);
+    const workTime = yearsFromHours(workYears * 52 * work);
+    const commuteTime = yearsFromHours(workYears * 52 * commute * 5);
 
-    remainingYears -= (workTimeYears + commuteYears);
+    remaining -= (workTime + commuteTime);
 
-    segments.push({ name: "Work", years: workTimeYears, color: "#555" });
-    segments.push({ name: "Commute", years: commuteYears, color: "#ff8c00" });
+    segments.splice(2, 1,
+      { name: "Work", years: workTime, color: "#555" },
+      { name: "Commute", years: commuteTime, color: "#ff8c00" },
+      { name: "Remaining", years: remaining, color: "#ffd700" }
+    );
 
-    description = "Work and commuting consume this much of your life.";
+    description = "Work and commuting cut into what’s left.";
   }
 
   if (step >= 4) {
-    const screenYears = ((LIFE_EXPECTANCY - 18) * 365 * screen) / (24 * 365);
-    remainingYears -= screenYears;
-    segments.push({ name: "Screen", years: screenYears, color: "#4aa3ff" });
-    description = "Screens quietly take this portion of your lifetime.";
+    const screenYears = yearsFromHours((LIFE_EXPECTANCY - 18) * 365 * screen);
+    remaining -= screenYears;
+
+    segments.splice(4, 1,
+      { name: "Screen", years: screenYears, color: "#4aa3ff" },
+      { name: "Remaining", years: remaining, color: "#ffd700" }
+    );
+
+    description = "Screens quietly consume years.";
   }
 
   if (step >= 5) {
-    const hygiene = 0.5;
-    const toilet = 0.75;
-    const cooking = 1.5;
-    const chores = 0.5;
+    const routineHours =
+      (0.5 + 0.75 + 1.5 + 0.5) * 365 * LIFE_EXPECTANCY;
 
-    const routineYears =
-      ((hygiene + toilet + cooking + chores) * 365 * LIFE_EXPECTANCY) / (24 * 365);
+    const routineYears = yearsFromHours(routineHours);
+    remaining -= routineYears;
 
-    remainingYears -= routineYears;
+    segments.splice(5, 1,
+      { name: "Daily routines", years: routineYears, color: "#795548" },
+      { name: "Remaining", years: remaining, color: "#ffd700" }
+    );
 
-    segments.push({ name: "Daily routines", years: routineYears, color: "#795548" });
-    description = "Invisible routines add up to years of your life.";
+    description = "Invisible routines finish the erosion.";
   }
 
   if (step >= 6) {
-    segments.push({ name: "Free Time", years: Math.max(remainingYears, 0), color: "#00e676" });
-    description = "This is what truly remains.";
+    segments.splice(6, 1,
+      { name: "Free time", years: Math.max(remaining, 0), color: "#00e676" }
+    );
+
+    description = "This is the time that is truly yours.";
   }
 
   draw(segments, description);
