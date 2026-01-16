@@ -92,7 +92,7 @@ button {
 <body>
 
 <h1>LIFE</h1>
-<p>Time doesn’t add up. It disappears.</p>
+<p>What you add to life is taken from what remains.</p>
 
 <div class="inputs">
   <label>Current age
@@ -143,7 +143,6 @@ function render() {
 
   const age = +ageInput.value;
   const retire = +retireInput.value;
-  const startWork = +startWorkInput.value;
   const sleep = +sleepInput.value;
   const work = +workInput.value;
   const commute = +commuteInput.value;
@@ -157,22 +156,27 @@ function render() {
 
   let description = "This is your remaining lifetime.";
 
+  // Step 1 — Remaining life
   if (step >= 1) {
     segments.push({ name: "Remaining", years: remaining, color: "#ffd700" });
   }
 
+  // Step 2 — Sleep (entire lifetime)
   if (step >= 2) {
     const sleepYears = yearsFromHours(sleep * 365 * LIFE_EXPECTANCY);
     remaining -= sleepYears;
+
     segments.splice(1, 1,
       { name: "Sleep", years: sleepYears, color: "#7b61ff" },
       { name: "Remaining", years: remaining, color: "#ffd700" }
     );
+
     description = "Sleep is the first thing taken away.";
   }
 
+  // Step 3 — Work + commute (now → retirement)
   if (step >= 3) {
-    const workYears = Math.max(retire - startWork, 0);
+    const workYears = Math.max(retire - age, 0);
     const workTime = yearsFromHours(workYears * 52 * work);
     const commuteTime = yearsFromHours(workYears * 52 * commute * 5);
 
@@ -184,9 +188,10 @@ function render() {
       { name: "Remaining", years: remaining, color: "#ffd700" }
     );
 
-    description = "Work and commuting cut into what’s left.";
+    description = "Work and commuting carve away years.";
   }
 
+  // Step 4 — Screen time (18 → 80)
   if (step >= 4) {
     const screenYears = yearsFromHours((LIFE_EXPECTANCY - 18) * 365 * screen);
     remaining -= screenYears;
@@ -196,9 +201,10 @@ function render() {
       { name: "Remaining", years: remaining, color: "#ffd700" }
     );
 
-    description = "Screens quietly consume years.";
+    description = "Screens quietly consume time.";
   }
 
+  // Step 5 — Daily routines (entire lifetime)
   if (step >= 5) {
     const routineHours =
       (0.5 + 0.75 + 1.5 + 0.5) * 365 * LIFE_EXPECTANCY;
@@ -214,6 +220,7 @@ function render() {
     description = "Invisible routines finish the erosion.";
   }
 
+  // Step 6 — True free time
   if (step >= 6) {
     segments.splice(6, 1,
       { name: "Free time", years: Math.max(remaining, 0), color: "#00e676" }
@@ -247,7 +254,6 @@ function draw(segments, text) {
 
 const ageInput = document.getElementById("age");
 const retireInput = document.getElementById("retire");
-const startWorkInput = document.getElementById("startWork");
 const sleepInput = document.getElementById("sleep");
 const workInput = document.getElementById("work");
 const commuteInput = document.getElementById("commute");
