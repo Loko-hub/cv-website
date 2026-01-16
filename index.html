@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>LIFE — Visualize Your Life</title>
+  <title>LIFE — Lifetime Projection</title>
   <style>
     body {
       font-family: system-ui, sans-serif;
@@ -15,7 +15,6 @@
 
     h1 {
       text-align: center;
-      margin-bottom: 10px;
     }
 
     p {
@@ -90,7 +89,6 @@
       margin-top: 30px;
       font-size: 15px;
       line-height: 1.6;
-      color: #ddd;
     }
   </style>
 </head>
@@ -98,10 +96,10 @@
 <body>
 
 <h1>LIFE</h1>
-<p>Visualize how your life is actually spent</p>
+<p>Projected allocation of your entire lifetime (age 0 → 80)</p>
 
 <div class="inputs">
-  <label>Age
+  <label>Current age
     <input id="age" type="number" value="25">
   </label>
 
@@ -134,18 +132,18 @@
   </label>
 </div>
 
-<button onclick="calculate()">Visualize Life</button>
+<button onclick="calculate()">Project My Life</button>
 
 <div id="lifeBar"></div>
-
 <div class="legend" id="legend"></div>
-
 <div id="insights"></div>
 
 <script>
 function calculate() {
 
-  // USER INPUTS
+  const LIFE_EXPECTANCY = 80;
+  const RETIREMENT_AGE = 67;
+
   const age = +ageInput.value;
   const startWork = +startWorkInput.value;
   const sleep = +sleepInput.value;
@@ -155,37 +153,81 @@ function calculate() {
   const exercise = +exerciseInput.value;
   const hobby = +hobbyInput.value;
 
+  const totalLifeHours = LIFE_EXPECTANCY * 365 * 24;
+
   // ASSUMED DAILY TIMES
   const toilet = 0.75;
   const hygiene = 0.5;
   const cooking = 1.5;
   const chores = 0.5;
 
-  // LIFETIME CALCULATIONS
-  const totalLifeHours = age * 365 * 24;
-  const yearsWorked = Math.max(age - startWork, 0);
+  // YEAR SPANS
+  const workYears = Math.max(RETIREMENT_AGE - startWork, 0);
+  const screenYears = Math.max(LIFE_EXPECTANCY - 18, 0);
+  const remainingYears = Math.max(LIFE_EXPECTANCY - age, 0);
 
   const categories = [
-    { name: "Sleep", hours: age * 365 * sleep, color: "#7b61ff" },
-    { name: "Work", hours: yearsWorked * 52 * work, color: "#555" },
-    { name: "Commute", hours: yearsWorked * 52 * commute * 5, color: "#ff8c00" },
-    { name: "Screen", hours: age * 365 * screen, color: "#4aa3ff" },
-    { name: "Exercise", hours: age * 365 * exercise, color: "#4caf50" },
-    { name: "Hobbies", hours: age * 365 * hobby, color: "#00bcd4" },
-    { name: "Toilet", hours: age * 365 * toilet, color: "#c19a6b" },
-    { name: "Hygiene", hours: age * 365 * hygiene, color: "#f48fb1" },
-    { name: "Cooking", hours: age * 365 * cooking, color: "#ffd54f" },
-    { name: "Chores", hours: age * 365 * chores, color: "#795548" }
+    {
+      name: "Sleep",
+      hours: LIFE_EXPECTANCY * 365 * sleep,
+      color: "#7b61ff"
+    },
+    {
+      name: "Work",
+      hours: workYears * 52 * work,
+      color: "#555"
+    },
+    {
+      name: "Commute",
+      hours: workYears * 52 * commute * 5,
+      color: "#ff8c00"
+    },
+    {
+      name: "Screen",
+      hours: screenYears * 365 * screen,
+      color: "#4aa3ff"
+    },
+    {
+      name: "Exercise",
+      hours: remainingYears * 365 * exercise,
+      color: "#4caf50"
+    },
+    {
+      name: "Hobbies",
+      hours: remainingYears * 365 * hobby,
+      color: "#00bcd4"
+    },
+    {
+      name: "Toilet",
+      hours: LIFE_EXPECTANCY * 365 * toilet,
+      color: "#c19a6b"
+    },
+    {
+      name: "Hygiene",
+      hours: LIFE_EXPECTANCY * 365 * hygiene,
+      color: "#f48fb1"
+    },
+    {
+      name: "Cooking",
+      hours: LIFE_EXPECTANCY * 365 * cooking,
+      color: "#ffd54f"
+    },
+    {
+      name: "Chores",
+      hours: LIFE_EXPECTANCY * 365 * chores,
+      color: "#795548"
+    }
   ];
 
-  const usedHours = categories.reduce((s, c) => s + c.hours, 0);
+  const used = categories.reduce((s, c) => s + c.hours, 0);
+
   categories.push({
     name: "Free Time",
-    hours: Math.max(totalLifeHours - usedHours, 0),
+    hours: Math.max(totalLifeHours - used, 0),
     color: "#ffd700"
   });
 
-  // RENDER BAR
+  // RENDER
   lifeBar.innerHTML = "";
   legend.innerHTML = "";
 
@@ -204,17 +246,15 @@ function calculate() {
     legend.appendChild(leg);
   });
 
-  // INSIGHTS
   insights.innerHTML = `
-    <p>You have lived approximately <strong>${(totalLifeHours/24/365).toFixed(1)}</strong> years.</p>
-    <p>You have spent <strong>${(categories[1].hours/24/365).toFixed(1)}</strong> years working.</p>
-    <p>You have spent <strong>${(categories[2].hours/24/365).toFixed(1)}</strong> years commuting.</p>
-    <p>You have spent <strong>${(categories[6].hours/24).toFixed(0)}</strong> full days on the toilet.</p>
-    <p>Free time represents only <strong>${((categories.at(-1).hours/totalLifeHours)*100).toFixed(1)}%</strong> of your life.</p>
+    <p>Assuming you live to <strong>80</strong>, you will sleep for <strong>${(categories[0].hours/24/365).toFixed(1)}</strong> years.</p>
+    <p>You will work for <strong>${(categories[1].hours/24/365).toFixed(1)}</strong> years.</p>
+    <p>You will commute for <strong>${(categories[2].hours/24/365).toFixed(1)}</strong> years.</p>
+    <p>You will spend <strong>${(categories[3].hours/24/365).toFixed(1)}</strong> years on screens.</p>
+    <p>Your remaining free time is <strong>${((categories.at(-1).hours/totalLifeHours)*100).toFixed(1)}%</strong> of your life.</p>
   `;
 }
 
-// DOM shortcuts
 const ageInput = document.getElementById("age");
 const startWorkInput = document.getElementById("startWork");
 const sleepInput = document.getElementById("sleep");
