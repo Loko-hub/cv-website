@@ -114,10 +114,6 @@ button {
   <label>Commute (hours/day)
     <input id="commute" type="number" step="0.1" value="1">
   </label>
-
-  <label>Screen time (hours/day)
-    <input id="screen" type="number" step="0.1" value="4">
-  </label>
 </div>
 
 <button onclick="nextStep()">Next</button>
@@ -146,7 +142,6 @@ function render() {
   const sleep = +sleepInput.value;
   const work = +workInput.value;
   const commute = +commuteInput.value;
-  const screen = +screenInput.value;
 
   let remaining = LIFE_EXPECTANCY - age;
 
@@ -191,28 +186,15 @@ function render() {
     description = "Work and commuting carve away years.";
   }
 
-  // Step 4 — Screen time (18 → 80)
+  // Step 4 — Daily routines (entire lifetime)
   if (step >= 4) {
-    const screenYears = yearsFromHours((LIFE_EXPECTANCY - 18) * 365 * screen);
-    remaining -= screenYears;
-
-    segments.splice(4, 1,
-      { name: "Screen", years: screenYears, color: "#4aa3ff" },
-      { name: "Remaining", years: remaining, color: "#ffd700" }
-    );
-
-    description = "Screens quietly consume time.";
-  }
-
-  // Step 5 — Daily routines (entire lifetime)
-  if (step >= 5) {
     const routineHours =
       (0.5 + 0.75 + 1.5 + 0.5) * 365 * LIFE_EXPECTANCY;
 
     const routineYears = yearsFromHours(routineHours);
     remaining -= routineYears;
 
-    segments.splice(5, 1,
+    segments.splice(4, 1,
       { name: "Daily routines", years: routineYears, color: "#795548" },
       { name: "Remaining", years: remaining, color: "#ffd700" }
     );
@@ -220,9 +202,9 @@ function render() {
     description = "Invisible routines finish the erosion.";
   }
 
-  // Step 6 — True free time
-  if (step >= 6) {
-    segments.splice(6, 1,
+  // Step 5 — True free time
+  if (step >= 5) {
+    segments.splice(5, 1,
       { name: "Free time", years: Math.max(remaining, 0), color: "#00e676" }
     );
 
@@ -257,7 +239,6 @@ const retireInput = document.getElementById("retire");
 const sleepInput = document.getElementById("sleep");
 const workInput = document.getElementById("work");
 const commuteInput = document.getElementById("commute");
-const screenInput = document.getElementById("screen");
 </script>
 
 </body>
