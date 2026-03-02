@@ -1,245 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>LIFE — Time Erosion</title>
-
-<style>
-body {
-  font-family: system-ui, sans-serif;
-  background: #111;
-  color: #eee;
-  max-width: 900px;
-  margin: auto;
-  padding: 40px;
-}
-
-h1, p {
-  text-align: center;
-}
-
-.inputs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 30px;
-}
-
-label {
-  display: flex;
-  flex-direction: column;
-  font-size: 14px;
-}
-
-input {
-  margin-top: 6px;
-  padding: 6px;
-  background: #222;
-  color: #fff;
-  border: 1px solid #333;
-}
-
-button {
-  margin-top: 20px;
-  padding: 12px;
-  width: 100%;
-  font-size: 16px;
-  background: #fff;
-  color: #000;
-  border: none;
-  cursor: pointer;
-}
-
-#timeline {
-  display: flex;
-  height: 50px;
-  margin-top: 40px;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.segment {
-  height: 100%;
-}
-
-#stepText {
-  margin-top: 20px;
-  text-align: center;
-  font-size: 16px;
-}
-
-.legend {
-  margin-top: 20px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  font-size: 13px;
-}
-
-.legend div {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.color {
-  width: 14px;
-  height: 14px;
-}
-</style>
+  <title>Mini Strategy Game</title>
 </head>
-
 <body>
+  <h1>Maximize Profit</h1>
+  <p>Budget: 100</p>
+  <button onclick="invest()">Invest in Marketing</button>
+  <p id="result"></p>
 
-<h1>LIFE</h1>
-<p>What you add to life is taken from what remains.</p>
+  <script>
+    let budget = 100;
+    let profit = 0;
 
-<div class="inputs">
-  <label>Current age
-    <input id="age" type="number" value="25">
-  </label>
-
-  <label>Retirement age
-    <input id="retire" type="number" value="67">
-  </label>
-
-  <label>Sleep (hours/day)
-    <input id="sleep" type="number" step="0.1" value="8">
-  </label>
-
-  <label>Work (hours/week)
-    <input id="work" type="number" value="40">
-  </label>
-
-  <label>Commute (hours/day)
-    <input id="commute" type="number" step="0.1" value="1">
-  </label>
-</div>
-
-<button onclick="nextStep()">Next</button>
-
-<div id="timeline"></div>
-<div id="stepText"></div>
-<div class="legend" id="legend"></div>
-
-<script>
-const LIFE_EXPECTANCY = 80;
-let step = 0;
-
-function nextStep() {
-  step++;
-  render();
-}
-
-function yearsFromHours(hours) {
-  return hours / (24 * 365);
-}
-
-function render() {
-
-  const age = +ageInput.value;
-  const retire = +retireInput.value;
-  const sleep = +sleepInput.value;
-  const work = +workInput.value;
-  const commute = +commuteInput.value;
-
-  let remaining = LIFE_EXPECTANCY - age;
-
-  const segments = [
-    { name: "Lived", years: age, color: "#444" }
-  ];
-
-  let description = "This is your remaining lifetime.";
-
-  // Step 1 — Remaining life
-  if (step >= 1) {
-    segments.push({ name: "Remaining", years: remaining, color: "#ffd700" });
-  }
-
-  // Step 2 — Sleep (entire lifetime)
-  if (step >= 2) {
-    const sleepYears = yearsFromHours(sleep * 365 * LIFE_EXPECTANCY);
-    remaining -= sleepYears;
-
-    segments.splice(1, 1,
-      { name: "Sleep", years: sleepYears, color: "#7b61ff" },
-      { name: "Remaining", years: remaining, color: "#ffd700" }
-    );
-
-    description = "Sleep is the first thing taken away.";
-  }
-
-  // Step 3 — Work + commute (now → retirement)
-  if (step >= 3) {
-    const workYears = Math.max(retire - age, 0);
-    const workTime = yearsFromHours(workYears * 52 * work);
-    const commuteTime = yearsFromHours(workYears * 52 * commute * 5);
-
-    remaining -= (workTime + commuteTime);
-
-    segments.splice(2, 1,
-      { name: "Work", years: workTime, color: "#555" },
-      { name: "Commute", years: commuteTime, color: "#ff8c00" },
-      { name: "Remaining", years: remaining, color: "#ffd700" }
-    );
-
-    description = "Work and commuting carve away years.";
-  }
-
-  // Step 4 — Daily routines (entire lifetime)
-  if (step >= 4) {
-    const routineHours =
-      (0.5 + 0.75 + 1.5 + 0.5) * 365 * LIFE_EXPECTANCY;
-
-    const routineYears = yearsFromHours(routineHours);
-    remaining -= routineYears;
-
-    segments.splice(4, 1,
-      { name: "Daily routines", years: routineYears, color: "#795548" },
-      { name: "Remaining", years: remaining, color: "#ffd700" }
-    );
-
-    description = "Invisible routines finish the erosion.";
-  }
-
-  // Step 5 — True free time
-  if (step >= 5) {
-    segments.splice(5, 1,
-      { name: "Free time", years: Math.max(remaining, 0), color: "#00e676" }
-    );
-
-    description = "This is the time that is truly yours.";
-  }
-
-  draw(segments, description);
-}
-
-function draw(segments, text) {
-  timeline.innerHTML = "";
-  legend.innerHTML = "";
-
-  segments.forEach(s => {
-    const div = document.createElement("div");
-    div.className = "segment";
-    div.style.width = (s.years / LIFE_EXPECTANCY) * 100 + "%";
-    div.style.background = s.color;
-    timeline.appendChild(div);
-
-    const l = document.createElement("div");
-    l.innerHTML = `<span class="color" style="background:${s.color}"></span>
-                   ${s.name} (${s.years.toFixed(1)} yrs)`;
-    legend.appendChild(l);
-  });
-
-  stepText.textContent = text;
-}
-
-const ageInput = document.getElementById("age");
-const retireInput = document.getElementById("retire");
-const sleepInput = document.getElementById("sleep");
-const workInput = document.getElementById("work");
-const commuteInput = document.getElementById("commute");
-</script>
-
+    function invest() {
+      if (budget >= 20) {
+        budget -= 20;
+        profit += Math.floor(Math.random() * 50);
+        document.getElementById("result").innerText =
+          "Profit: " + profit + " | Budget: " + budget;
+      }
+    }
+  </script>
 </body>
 </html>
