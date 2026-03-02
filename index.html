@@ -1,26 +1,157 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Mini Strategy Game</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Particle Universe</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: radial-gradient(circle at center, #0f2027, #000000);
+        font-family: Arial, sans-serif;
+    }
+
+    canvas {
+        display: block;
+    }
+
+    .overlay {
+        position: absolute;
+        top: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: white;
+        text-align: center;
+        letter-spacing: 2px;
+        font-size: 18px;
+        opacity: 0.8;
+    }
+</style>
 </head>
 <body>
-  <h1>Maximize Profit</h1>
-  <p>Budget: 100</p>
-  <button onclick="invest()">Invest in Marketing</button>
-  <p id="result"></p>
 
-  <script>
-    let budget = 100;
-    let profit = 0;
+<div class="overlay">Interactive Particle Universe — Move Mouse • Click</div>
+<canvas id="canvas"></canvas>
 
-    function invest() {
-      if (budget >= 20) {
-        budget -= 20;
-        profit += Math.floor(Math.random() * 50);
-        document.getElementById("result").innerText =
-          "Profit: " + profit + " | Budget: " + budget;
-      }
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+window.addEventListener("resize", () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+});
+
+let mouse = {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    radius: 120
+};
+
+window.addEventListener("mousemove", (e) => {
+    mouse.x = e.x;
+    mouse.y = e.y;
+});
+
+let shockwaves = [];
+
+window.addEventListener("click", (e) => {
+    shockwaves.push({
+        x: e.x,
+        y: e.y,
+        radius: 0,
+        maxRadius: 300
+    });
+});
+
+class Particle {
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 2 + 1;
+        this.baseX = this.x;
+        this.baseY = this.y;
+        this.density = Math.random() * 40 + 5;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = (Math.random() - 0.5) * 0.5;
     }
-  </script>
+
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(0, 255, 255, 0.8)";
+        ctx.shadowColor = "#00ffff";
+        ctx.shadowBlur = 15;
+        ctx.fill();
+    }
+
+    update() {
+        let dx = mouse.x - this.x;
+        let dy = mouse.y - this.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < mouse.radius) {
+            let forceDirectionX = dx / distance;
+            let forceDirectionY = dy / distance;
+            let force = (mouse.radius - distance) / mouse.radius;
+            this.x -= forceDirectionX * force * this.density * 0.5;
+            this.y -= forceDirectionY * force * this.density * 0.5;
+        } else {
+            this.x += this.vx;
+            this.y += this.vy;
+        }
+
+        shockwaves.forEach(wave => {
+            let dx = this.x - wave.x;
+            let dy = this.y - wave.y;
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < wave.radius && dist > wave.radius - 20) {
+                this.x += dx * 0.05;
+                this.y += dy * 0.05;
+            }
+        });
+
+        this.draw();
+    }
+}
+
+let particlesArray = [];
+const particleCount = 400;
+
+function init() {
+    particlesArray = [];
+    for (let i = 0; i < particleCount; i++) {
+        particlesArray.push(new Particle());
+    }
+}
+
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    shockwaves.forEach((wave, index) => {
+        wave.radius += 5;
+        ctx.beginPath();
+        ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(0,255,255,0.2)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        if (wave.radius > wave.maxRadius) {
+            shockwaves.splice(index, 1);
+        }
+    });
+
+    particlesArray.forEach(p => p.update());
+
+    requestAnimationFrame(animate);
+}
+
+init();
+animate();
+</script>
+
 </body>
 </html>
