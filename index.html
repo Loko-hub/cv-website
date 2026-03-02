@@ -2,14 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Interactive Particle Universe</title>
+
 <style>
-    body {
+    html, body {
         margin: 0;
+        padding: 0;
         overflow: hidden;
         background: radial-gradient(circle at center, #0f2027, #000000);
         font-family: Arial, sans-serif;
+        touch-action: none;
     }
 
     canvas {
@@ -26,64 +29,98 @@
         letter-spacing: 2px;
         font-size: 18px;
         opacity: 0.8;
+        pointer-events: none;
+    }
+
+    .victory {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #00ffff;
+        font-size: 32px;
+        text-align: center;
+        display: none;
+        text-shadow: 0 0 20px #00ffff;
     }
 </style>
 </head>
 <body>
 
-<div class="overlay">Interactive Particle Universe — Move Mouse • Click</div>
+<div class="overlay">Move • Touch • Click to bend space</div>
+<div class="victory" id="victoryText">
+    Congratulations,<br>
+    you destroyed your universe!
+</div>
+
 <canvas id="canvas"></canvas>
 
 <script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
+const victoryText = document.getElementById("victoryText");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+let dpi = window.devicePixelRatio || 1;
 
-window.addEventListener("resize", () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-});
+function resizeCanvas() {
+    canvas.width = window.innerWidth * dpi;
+    canvas.height = window.innerHeight * dpi;
+    canvas.style.width = window.innerWidth + "px";
+    canvas.style.height = window.innerHeight + "px";
+    ctx.setTransform(dpi, 0, 0, dpi, 0, 0);
+}
+
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
 
 let mouse = {
-    x: canvas.width / 2,
-    y: canvas.height / 2,
-    radius: 120
+    x: window.innerWidth / 2,
+    y: window.innerHeight / 2,
+    radius: 140
 };
 
+// Desktop
 window.addEventListener("mousemove", (e) => {
-    mouse.x = e.x;
-    mouse.y = e.y;
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
 });
+
+// Mobile
+window.addEventListener("touchmove", (e) => {
+    mouse.x = e.touches[0].clientX;
+    mouse.y = e.touches[0].clientY;
+}, { passive: true });
 
 let shockwaves = [];
 
-window.addEventListener("click", (e) => {
-    shockwaves.push({
-        x: e.x,
-        y: e.y,
-        radius: 0,
-        maxRadius: 300
-    });
+window.addEventListener("click", createShockwave);
+window.addEventListener("touchstart", (e) => {
+    createShockwave(e.touches[0]);
 });
+
+function createShockwave(e) {
+    shockwaves.push({
+        x: e.clientX,
+        y: e.clientY,
+        radius: 0,
+        maxRadius: 350
+    });
+}
 
 class Particle {
     constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
+        this.x = Math.random() * window.innerWidth;
+        this.y = Math.random() * window.innerHeight;
         this.size = Math.random() * 2 + 1;
-        this.baseX = this.x;
-        this.baseY = this.y;
-        this.density = Math.random() * 40 + 5;
-        this.vx = (Math.random() - 0.5) * 0.5;
-        this.vy = (Math.random() - 0.5) * 0.5;
+        this.vx = (Math.random() - 0.5) * 0.8;
+        this.vy = (Math.random() - 0.5) * 0.8;
+        this.density = Math.random() * 30 + 10;
     }
 
     draw() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(0, 255, 255, 0.8)";
+        ctx.fillStyle = "rgba(0,255,255,0.9)";
         ctx.shadowColor = "#00ffff";
         ctx.shadowBlur = 15;
         ctx.fill();
@@ -95,45 +132,55 @@ class Particle {
         let distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < mouse.radius) {
-            let forceDirectionX = dx / distance;
-            let forceDirectionY = dy / distance;
+            let forceX = dx / distance;
+            let forceY = dy / distance;
             let force = (mouse.radius - distance) / mouse.radius;
-            this.x -= forceDirectionX * force * this.density * 0.5;
-            this.y -= forceDirectionY * force * this.density * 0.5;
-        } else {
-            this.x += this.vx;
-            this.y += this.vy;
+            this.x -= forceX * force * this.density * 0.6;
+            this.y -= forceY * force * this.density * 0.6;
         }
 
         shockwaves.forEach(wave => {
             let dx = this.x - wave.x;
             let dy = this.y - wave.y;
             let dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < wave.radius && dist > wave.radius - 20) {
-                this.x += dx * 0.05;
-                this.y += dy * 0.05;
+            if (dist < wave.radius && dist > wave.radius - 25) {
+                this.x += dx * 0.06;
+                this.y += dy * 0.06;
             }
         });
 
+        this.x += this.vx;
+        this.y += this.vy;
+
         this.draw();
+    }
+
+    isOffScreen() {
+        return (
+            this.x < -50 ||
+            this.x > window.innerWidth + 50 ||
+            this.y < -50 ||
+            this.y > window.innerHeight + 50
+        );
     }
 }
 
-let particlesArray = [];
+let particles = [];
 const particleCount = 400;
 
 function init() {
-    particlesArray = [];
+    particles = [];
     for (let i = 0; i < particleCount; i++) {
-        particlesArray.push(new Particle());
+        particles.push(new Particle());
     }
+    victoryText.style.display = "none";
 }
 
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     shockwaves.forEach((wave, index) => {
-        wave.radius += 5;
+        wave.radius += 6;
         ctx.beginPath();
         ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
         ctx.strokeStyle = "rgba(0,255,255,0.2)";
@@ -144,7 +191,15 @@ function animate() {
         }
     });
 
-    particlesArray.forEach(p => p.update());
+    particles.forEach(p => p.update());
+
+    // Remove particles that left screen
+    particles = particles.filter(p => !p.isOffScreen());
+
+    // Victory condition
+    if (particles.length === 0) {
+        victoryText.style.display = "block";
+    }
 
     requestAnimationFrame(animate);
 }
