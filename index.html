@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Mini Age of War - Base Weapon Range</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Mini Age of War - Weapon Upgrade</title>
 <style>
-html, body{margin:0;padding:0;overflow:hidden;background:#0b0f1a;font-family:Arial,sans-serif;touch-action:none;}
+html,body{margin:0;padding:0;overflow:hidden;background:#0b0f1a;font-family:Arial,sans-serif;touch-action:none;}
 canvas{display:block;}
 #ui{position:fixed;top:0;width:100%;padding:10px;background:rgba(0,0,0,0.7);display:flex;justify-content:space-between;align-items:center;box-sizing:border-box;color:#00ffff;font-size:14px;}
 button{background:#00ffff22;border:1px solid #00ffff;color:#00ffff;padding:6px 10px;border-radius:6px;margin-left:5px;font-size:14px;}
@@ -22,7 +21,7 @@ button:active{background:#00ffff55;}
 <button onclick="spawnUnit('warrior')">Warrior (10)</button>
 <button onclick="spawnUnit('archer')">Archer (20)</button>
 <button onclick="spawnUnit('tank')">Tank (50)</button>
-<button onclick="buyWeapon()">Buy Weapon (30)</button>
+<button id="weaponButton" onclick="buyOrUpgradeWeapon()">Buy Weapon (30)</button>
 </div>
 </div>
 
@@ -40,9 +39,11 @@ function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeigh
 resize();
 window.addEventListener("resize",resize);
 
-let gold=100,playerBaseHP=1000,enemyBaseHP=1000,units=[],gameOver=false,weaponPurchased=false,weaponCooldown=0;
+let gold=100,playerBaseHP=1000,enemyBaseHP=1000,units=[],gameOver=false;
+let weaponPurchased=false,weaponLevel=0,weaponCooldown=0;
+
 const groundY=()=>canvas.height-80;
-const baseWeaponRange=canvas.width*0.1;
+let weapon={damage:25,range:canvas.width*0.1}; // start weaker than before
 
 const types={
 warrior:{hp:120,damage:12,speed:1.2,range:20,cost:10,reward:10},
@@ -82,7 +83,27 @@ ctx.fillStyle='red';ctx.fillRect(this.x-20,this.y-50,40,5);ctx.fillStyle='lime';
 }
 
 function spawnUnit(type){if(gameOver)return;if(gold>=types[type].cost){gold-=types[type].cost;units.push(new Unit(type,'player'));updateUI();}}
-function buyWeapon(){if(gameOver||weaponPurchased)return;if(gold>=30){gold-=30;weaponPurchased=true;updateUI();}}
+function buyOrUpgradeWeapon(){
+if(gameOver)return;
+const btn=document.getElementById('weaponButton');
+if(!weaponPurchased){
+if(gold>=30){gold-=30;weaponPurchased=true;weaponLevel=0;updateWeaponButton();updateUI();}
+}else{
+if(weaponLevel===0 && gold>=50){gold-=50;weapon.damage+=15;weaponLevel++;updateWeaponButton();updateUI();}
+else if(weaponLevel===1 && gold>=100){gold-=100;weapon.damage+=20;weaponLevel++;updateWeaponButton();updateUI();}
+else if(weaponLevel===2 && gold>=200){gold-=200;weapon.range=canvas.width*0.5;weaponLevel++;updateWeaponButton();updateUI();}
+}
+}
+
+function updateWeaponButton(){
+const btn=document.getElementById('weaponButton');
+if(!weaponPurchased){btn.textContent='Buy Weapon (30)';return;}
+if(weaponLevel===0) btn.textContent='Upgrade Weapon (50)';
+else if(weaponLevel===1) btn.textContent='Upgrade Weapon (100)';
+else if(weaponLevel===2) btn.textContent='Upgrade Weapon (200)';
+else btn.style.display='none';
+}
+
 function spawnEnemy(){if(gameOver)return;let r=Math.random(),type;if(r<0.5)type='warrior';else if(r<0.8)type='archer';else type='tank';units.push(new Unit(type,'enemy'));}
 setInterval(spawnEnemy,2500);
 
@@ -90,12 +111,10 @@ function updateUI(){document.getElementById('gold').textContent=Math.floor(gold)
 function checkGameOver(){if(playerBaseHP<=0 || enemyBaseHP<=0){gameOver=true;document.getElementById('gameOverScreen').style.display='flex';document.getElementById('gameOverText').textContent=playerBaseHP<=0?'Defeat':'Victory';}}
 
 function drawBases(){
-// Player base
 ctx.fillStyle='#00ffff';ctx.fillRect(40,groundY()-60,60,60);
-// Weapon
 if(weaponPurchased){
 ctx.save();ctx.translate(70,groundY()-60);
-let nearest=units.filter(u=>u.side==='enemy' && u.x<40+baseWeaponRange).sort((a,b)=>Math.abs(a.x-70)-Math.abs(b.x-70))[0];
+let nearest=units.filter(u=>u.side==='enemy' && u.x<40+weapon.range).sort((a,b)=>Math.abs(a.x-70)-Math.abs(b.x-70))[0];
 let angle=0;if(nearest) angle=Math.atan2(nearest.y-(groundY()-60),nearest.x-70);
 ctx.rotate(angle);ctx.fillStyle='#00ffff';ctx.fillRect(0,-5,30,10);ctx.restore();
 }
@@ -105,20 +124,15 @@ ctx.fillStyle='#ff3c7c';ctx.fillRect(canvas.width-100,groundY()-60,60,60);
 function fireWeapon(){
 if(!weaponPurchased)return;weaponCooldown-=16;
 if(weaponCooldown<=0){
-let nearest=units.filter(u=>u.side==='enemy' && u.x<40+baseWeaponRange).sort((a,b)=>Math.abs(a.x-70)-Math.abs(b.x-70))[0];
-if(nearest){nearest.hp-=40;if(nearest.hp<=0){gold+=nearest.stats.reward;units=units.filter(u=>u!==nearest);updateUI();}weaponCooldown=300;}
+let nearest=units.filter(u=>u.side==='enemy' && u.x<40+weapon.range).sort((a,b)=>Math.abs(a.x-70)-Math.abs(b.x-70))[0];
+if(nearest){nearest.hp-=weapon.damage;if(nearest.hp<=0){gold+=nearest.stats.reward;units=units.filter(u=>u!==nearest);updateUI();}weaponCooldown=300;}
 }
 }
 
-function gameLoop(){
-ctx.clearRect(0,0,canvas.width,canvas.height);
-drawBases();units.forEach(u=>u.update());units.forEach(u=>u.draw());fireWeapon();updateUI();checkGameOver();
-requestAnimationFrame(gameLoop);
-}
-
-function restartGame(){gold=100;playerBaseHP=1000;enemyBaseHP=1000;units=[];gameOver=false;weaponPurchased=false;weaponCooldown=0;document.getElementById('gameOverScreen').style.display='none';updateUI();}
-
+function gameLoop(){ctx.clearRect(0,0,canvas.width,canvas.height);drawBases();units.forEach(u=>u.update());units.forEach(u=>u.draw());fireWeapon();updateUI();checkGameOver();requestAnimationFrame(gameLoop);}
+function restartGame(){gold=100;playerBaseHP=1000;enemyBaseHP=1000;units=[];gameOver=false;weaponPurchased=false;weaponLevel=0;weaponCooldown=0;document.getElementById('weaponButton').style.display='inline';updateWeaponButton();document.getElementById('gameOverScreen').style.display='none';updateUI();}
 updateUI();gameLoop();
 </script>
+
 </body>
 </html>
