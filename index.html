@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nutzwertanalyse Tool</title>
+<title>Nutzwertanalyse Optimizer</title>
 <style>
-body { font-family: Arial, sans-serif; margin:20px; background:#f0f4f8; color:#111; }
+body { font-family: Arial,sans-serif; margin:20px; background:#f0f4f8; color:#111; }
 h1 { text-align:center; color:#0077cc; }
 form { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
 input, select { padding:6px 10px; font-size:14px; border:1px solid #ccc; border-radius:4px; }
@@ -18,7 +18,10 @@ th { background:#0077cc; color:white; }
 </head>
 <body>
 
-<h1>Nutzwertanalyse Tool</h1>
+<h1>Nutzwertanalyse Optimizer</h1>
+
+<h3>Set Total Constraint Limit:</h3>
+<input type="number" id="totalConstraintLimit" placeholder="Max total constraint" step="0.01" value="100">
 
 <form id="itemForm">
 <input type="text" id="itemName" placeholder="Item Name" required>
@@ -33,10 +36,12 @@ th { background:#0077cc; color:white; }
 <button type="submit">Add Item</button>
 </form>
 
+<button onclick="calculateOptimal()">Select Optimal Items</button>
+
 <table>
 <thead>
 <tr>
-<th>#</th><th>Item</th><th>Constraint</th><th>Value</th><th>Benefit</th><th>Weighted Benefit</th>
+<th>#</th><th>Item</th><th>Constraint</th><th>Value</th><th>Weighted Benefit</th><th>Selected</th>
 </tr>
 </thead>
 <tbody id="resultBody"></tbody>
@@ -51,16 +56,14 @@ document.getElementById('itemForm').addEventListener('submit', function(e){
     const constraint = document.getElementById('constraintType').value;
     const constraintValue = parseFloat(document.getElementById('constraintValue').value);
     const benefit = parseFloat(document.getElementById('benefitValue').value);
-    if(constraintValue<=0){ alert("Constraint value must be > 0"); return; }
+    if(constraintValue <= 0){ alert("Constraint must be > 0"); return; }
     const weightedBenefit = benefit / constraintValue;
-    items.push({name, constraint, constraintValue, benefit, weightedBenefit});
+    items.push({name, constraint, constraintValue, benefit, weightedBenefit, selected:false});
     renderTable();
     this.reset();
 });
 
 function renderTable(){
-    // Sort descending by weightedBenefit
-    items.sort((a,b)=>b.weightedBenefit - a.weightedBenefit);
     const tbody = document.getElementById('resultBody');
     tbody.innerHTML = '';
     items.forEach((item,i)=>{
@@ -68,13 +71,31 @@ function renderTable(){
         tr.innerHTML = `
         <td>${i+1}</td>
         <td>${item.name}</td>
-        <td>${item.constraint}</td>
-        <td>${item.constraintValue.toFixed(2)}</td>
+        <td>${item.constraintValue.toFixed(2)} (${item.constraint})</td>
         <td>${item.benefit.toFixed(2)}</td>
         <td>${item.weightedBenefit.toFixed(2)}</td>
+        <td>${item.selected ? '✅' : ''}</td>
         `;
         tbody.appendChild(tr);
     });
+}
+
+// Greedy selection: pick items by weighted benefit until total constraint limit is reached
+function calculateOptimal(){
+    const limit = parseFloat(document.getElementById('totalConstraintLimit').value);
+    if(limit<=0){ alert("Total constraint must be > 0"); return; }
+    // Reset selection
+    items.forEach(item=>item.selected=false);
+    let remaining = limit;
+    // Sort items descending by weighted benefit
+    const sorted = [...items].sort((a,b)=>b.weightedBenefit - a.weightedBenefit);
+    for(let item of sorted){
+        if(item.constraintValue <= remaining){
+            item.selected = true;
+            remaining -= item.constraintValue;
+        }
+    }
+    renderTable();
 }
 </script>
 
