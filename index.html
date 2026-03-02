@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Mini Age of War</title>
+<title>Mini Age of War - Advanced</title>
 
 <style>
 html, body {
@@ -15,9 +15,7 @@ html, body {
     touch-action: none;
 }
 
-canvas {
-    display: block;
-}
+canvas { display: block; }
 
 .ui {
     position: absolute;
@@ -30,8 +28,8 @@ canvas {
 }
 
 button {
-    margin-top: 8px;
-    padding: 8px 16px;
+    margin: 4px;
+    padding: 8px 14px;
     background: #00ffff;
     border: none;
     color: black;
@@ -55,11 +53,13 @@ button {
 <body>
 
 <div class="ui">
-    Gold: <span id="gold">0</span> |
+    Gold: <span id="gold">10</span> |
     Player HP: <span id="playerHP">1000</span> |
     Enemy HP: <span id="enemyHP">1000</span>
     <br>
-    <button id="spawnBtn">Spawn Unit (Cost: 50)</button>
+    <button onclick="spawnUnit('warrior')">Warrior (10)</button>
+    <button onclick="spawnUnit('archer')">Archer (20)</button>
+    <button onclick="spawnUnit('tank')">Tank (50)</button>
 </div>
 
 <div class="gameover" id="gameOverScreen">
@@ -87,26 +87,34 @@ resizeCanvas();
 
 const groundY = () => window.innerHeight * 0.75;
 
-let gold = 0;
+let gold = 10;
 let playerBaseHP = 1000;
 let enemyBaseHP = 1000;
 let units = [];
 let gameRunning = true;
 
-const UNIT_COST = 50;
-const GOLD_RATE = 10;
-const ENEMY_SPAWN_INTERVAL = 2500;
+const UNIT_STATS = {
+    warrior: { hp: 120, damage: 20, speed: 1.2, range: 0, cost: 10, reward: 10 },
+    archer:  { hp: 70,  damage: 15, speed: 1, range: 120, cost: 20, reward: 20 },
+    tank:    { hp: 300, damage: 40, speed: 0.6, range: 0, cost: 50, reward: 50 }
+};
 
 class Unit {
-    constructor(x, isPlayer) {
-        this.x = x;
-        this.y = groundY();
+    constructor(type, isPlayer) {
+        this.type = type;
+        this.isPlayer = isPlayer;
+        const stats = UNIT_STATS[type];
+        this.hp = stats.hp;
+        this.maxHp = stats.hp;
+        this.damage = stats.damage;
+        this.speed = isPlayer ? stats.speed : -stats.speed;
+        this.range = stats.range;
+        this.reward = stats.reward;
+
         this.width = 30;
         this.height = 50;
-        this.hp = 100;
-        this.maxHp = 100;
-        this.speed = isPlayer ? 1 : -1;
-        this.isPlayer = isPlayer;
+        this.x = isPlayer ? 60 : window.innerWidth - 90;
+        this.y = groundY();
         this.attackCooldown = 0;
     }
 
@@ -114,56 +122,56 @@ class Unit {
         ctx.fillStyle = this.isPlayer ? "#00ffff" : "#ff0066";
         ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
 
-        // Health bar
         ctx.fillStyle = "red";
-        ctx.fillRect(this.x, this.y - this.height - 10, this.width, 5);
+        ctx.fillRect(this.x, this.y - this.height - 8, this.width, 4);
         ctx.fillStyle = "lime";
-        ctx.fillRect(this.x, this.y - this.height - 10, this.width * (this.hp / this.maxHp), 5);
+        ctx.fillRect(this.x, this.y - this.height - 8, this.width * (this.hp / this.maxHp), 4);
     }
 
     update(delta) {
         if (!gameRunning) return;
 
-        let target = units.find(u => u.isPlayer !== this.isPlayer && Math.abs(u.x - this.x) < this.width);
+        let enemy = units.find(u =>
+            u.isPlayer !== this.isPlayer &&
+            Math.abs(u.x - this.x) <= (this.range || this.width)
+        );
 
-        if (target) {
+        if (enemy) {
             if (this.attackCooldown <= 0) {
-                target.hp -= 20;
-                this.attackCooldown = 500;
+                enemy.hp -= this.damage;
+                this.attackCooldown = 700;
             }
         } else {
             this.x += this.speed;
         }
 
         if (this.attackCooldown > 0) this.attackCooldown -= delta;
-
         this.draw();
     }
 }
 
-function spawnPlayerUnit() {
-    if (gold >= UNIT_COST && gameRunning) {
-        gold -= UNIT_COST;
-        units.push(new Unit(50, true));
+function spawnUnit(type) {
+    if (!gameRunning) return;
+    const cost = UNIT_STATS[type].cost;
+    if (gold >= cost) {
+        gold -= cost;
+        units.push(new Unit(type, true));
     }
 }
 
-function spawnEnemyUnit() {
+function spawnEnemy() {
     if (!gameRunning) return;
-    units.push(new Unit(window.innerWidth - 80, false));
+
+    const rand = Math.random();
+    let type;
+    if (rand < 0.5) type = "warrior";
+    else if (rand < 0.8) type = "archer";
+    else type = "tank";
+
+    units.push(new Unit(type, false));
 }
 
-document.getElementById("spawnBtn").addEventListener("click", spawnPlayerUnit);
-document.getElementById("spawnBtn").addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    spawnPlayerUnit();
-}, { passive: false });
-
-setInterval(() => {
-    if (gameRunning) gold += GOLD_RATE;
-}, 1000);
-
-setInterval(spawnEnemyUnit, ENEMY_SPAWN_INTERVAL);
+setInterval(spawnEnemy, 2500);
 
 let lastTime = 0;
 
@@ -173,26 +181,31 @@ function gameLoop(timestamp) {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw bases
     ctx.fillStyle = "#00ffff";
-    ctx.fillRect(10, groundY() - 100, 40, 100);
+    ctx.fillRect(10, groundY() - 120, 50, 120);
 
     ctx.fillStyle = "#ff0066";
-    ctx.fillRect(window.innerWidth - 50, groundY() - 100, 40, 100);
+    ctx.fillRect(window.innerWidth - 60, groundY() - 120, 50, 120);
 
     units.forEach(unit => unit.update(delta));
 
-    // Remove dead units
-    units = units.filter(unit => unit.hp > 0);
+    // Handle deaths and gold rewards
+    units = units.filter(unit => {
+        if (unit.hp <= 0) {
+            if (!unit.isPlayer) gold += unit.reward;
+            return false;
+        }
+        return true;
+    });
 
     // Base damage
     units.forEach(unit => {
-        if (unit.isPlayer && unit.x + unit.width >= window.innerWidth - 50) {
-            enemyBaseHP -= 10;
+        if (unit.isPlayer && unit.x + unit.width >= window.innerWidth - 60) {
+            enemyBaseHP -= unit.damage;
             unit.hp = 0;
         }
-        if (!unit.isPlayer && unit.x <= 50) {
-            playerBaseHP -= 10;
+        if (!unit.isPlayer && unit.x <= 60) {
+            playerBaseHP -= unit.damage;
             unit.hp = 0;
         }
     });
@@ -217,7 +230,7 @@ function showGameOver() {
 }
 
 function restartGame() {
-    gold = 0;
+    gold = 10;
     playerBaseHP = 1000;
     enemyBaseHP = 1000;
     units = [];
