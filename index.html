@@ -3,18 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Mini Age of War - Weapon Upgrade</title>
+<title>Mini Age of War - Animated</title>
 <style>
-html,body{margin:0;padding:0;overflow:hidden;background:#0b0f1a;font-family:Arial,sans-serif;touch-action:none;}
-canvas{display:block;}
-#ui{position:fixed;top:0;width:100%;padding:10px;background:rgba(0,0,0,0.7);display:flex;justify-content:space-between;align-items:center;box-sizing:border-box;color:#00ffff;font-size:14px;}
-button{background:#00ffff22;border:1px solid #00ffff;color:#00ffff;padding:6px 10px;border-radius:6px;margin-left:5px;font-size:14px;}
-button:active{background:#00ffff55;}
-#gameOverScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#000c;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:28px;display:none;}
+html, body { margin:0; padding:0; overflow:hidden; background:#0b0f1a; font-family:Arial,sans-serif; touch-action:none; }
+canvas { display:block; }
+#ui { position:fixed; top:0; width:100%; padding:10px; background:rgba(0,0,0,0.7); display:flex; justify-content:space-between; align-items:center; box-sizing:border-box; color:#00ffff; font-size:14px; }
+button { background:#00ffff22; border:1px solid #00ffff; color:#00ffff; padding:6px 10px; border-radius:6px; margin-left:5px; font-size:14px; }
+button:active { background:#00ffff55; }
+#gameOverScreen { position:fixed; top:0; left:0; width:100%; height:100%; background:#000c; display:flex; flex-direction:column; justify-content:center; align-items:center; font-size:28px; display:none; color:#00ffff; }
 </style>
 </head>
 <body>
-
 <div id="ui">
 <div>💰 Gold: <span id="gold">100</span> | 🏰 HP: <span id="playerHP">1000</span> vs <span id="enemyHP">1000</span></div>
 <div>
@@ -36,102 +35,186 @@ button:active{background:#00ffff55;}
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
-resize();
-window.addEventListener("resize",resize);
+resize(); window.addEventListener("resize", resize);
 
-let gold=100,playerBaseHP=1000,enemyBaseHP=1000,units=[],gameOver=false;
-let weaponPurchased=false,weaponLevel=0,weaponCooldown=0;
-
-const groundY=()=>canvas.height-80;
-let weapon={damage:25,range:canvas.width*0.1}; // start weaker than before
+let gold=100, playerBaseHP=1000, enemyBaseHP=1000, units=[], gameOver=false;
+let weaponPurchased=false, weaponLevel=0, weaponCooldown=0;
+const groundY=()=>canvas.height*0.85;
+let weapon={damage:20, range:canvas.width*0.1};
 
 const types={
-warrior:{hp:120,damage:12,speed:1.2,range:20,cost:10,reward:10},
-archer:{hp:70,damage:8,speed:1,range:140,cost:20,reward:20},
-tank:{hp:350,damage:30,speed:0.6,range:25,cost:50,reward:40}
+warrior:{hp:120,damage:12,speed:canvas.width*0.0008,range:canvas.width*0.02,cost:10,reward:10},
+archer:{hp:70,damage:8,speed:canvas.width*0.0007,range:canvas.width*0.08,cost:20,reward:20},
+tank:{hp:350,damage:30,speed:canvas.width*0.0005,range:canvas.width*0.025,cost:50,reward:40}
 };
 
-class Unit{
-constructor(type,side){
-this.type=type;this.side=side;this.stats=types[type];this.hp=this.stats.hp;
-this.x=side==='player'?120:canvas.width-120;this.y=groundY();this.atBase=false;
-}
-update(){
-if(gameOver)return;
-let target=null;
-if(this.atBase){
-if(this.side==='player') enemyBaseHP-=this.stats.damage*0.05;
-else playerBaseHP-=this.stats.damage*0.05;
-return;
-}else{
-target=units.find(u=>u.side!==this.side && Math.abs(u.x-this.x)<=this.stats.range);
-if(target){
-target.hp-=this.stats.damage*0.02;
-if(target.hp<=0){if(target.side==='enemy')gold+=target.stats.reward;units=units.filter(u=>u!==target);updateUI();}
-}else{this.x+=this.side==='player'? this.stats.speed : -this.stats.speed;}
-}
-if(this.side==='player' && this.x>=canvas.width-100-30){this.x=canvas.width-100-30;this.atBase=true;}
-if(this.side==='enemy' && this.x<=40+60){this.x=40+60;this.atBase=true;}
-}
-draw(){
-if(this.type==='warrior'){ctx.fillStyle=this.side==='player'?'#00ffff':'#ff3c7c';ctx.fillRect(this.x-15,this.y-40,30,40);}
-if(this.type==='archer'){ctx.fillStyle=this.side==='player'?'#00ffff':'#ff3c7c';ctx.fillRect(this.x-8,this.y-35,16,35);
-ctx.strokeStyle='#00ff00';ctx.beginPath();ctx.moveTo(this.x,this.y-20);ctx.lineTo(this.x+(this.side==='player'?1:-1)*20,this.y-25);ctx.stroke();}
-if(this.type==='tank'){ctx.fillStyle=this.side==='player'?'#00ffff':'#ff3c7c';ctx.fillRect(this.x-20,this.y-45,40,45);ctx.strokeStyle='#fff';ctx.strokeRect(this.x-20,this.y-45,40,45);}
-ctx.fillStyle='red';ctx.fillRect(this.x-20,this.y-50,40,5);ctx.fillStyle='lime';ctx.fillRect(this.x-20,this.y-50,40*(this.hp/this.stats.hp),5);
-}
+class Unit {
+    constructor(type, side){
+        this.type=type; this.side=side; this.stats=types[type]; this.hp=this.stats.hp;
+        this.x=side==='player'? canvas.width*0.12 : canvas.width*0.88;
+        this.y=groundY();
+        this.atBase=false;
+        this.step=0; // for running animation
+    }
+
+    update(prevUnit){
+        if(gameOver) return;
+
+        // Queue logic: stop if too close to unit in front
+        const spacing=canvas.width*0.04;
+        if(prevUnit && this.side===prevUnit.side){
+            if(this.side==='player'){
+                if(this.x + spacing > prevUnit.x) return;
+            } else {
+                if(this.x - spacing < prevUnit.x) return;
+            }
+        }
+
+        // Move
+        if(!this.atBase){
+            let target = units.find(u=>u.side!==this.side && Math.abs(u.x-this.x)<=this.stats.range);
+            if(target){ target.hp -= this.stats.damage*0.02; if(target.hp<=0){ if(target.side==='enemy') gold+=target.stats.reward; units=units.filter(u=>u!==target); updateUI(); } }
+            else { this.x += this.side==='player'? this.stats.speed : -this.stats.speed; }
+        }
+
+        // Stop in front of enemy base
+        const playerBaseX = canvas.width-100; const enemyBaseX = 40+60;
+        if(this.side==='player' && this.x>=playerBaseX-30){this.x=playerBaseX-30; this.atBase=true;}
+        if(this.side==='enemy' && this.x<=enemyBaseX){this.x=enemyBaseX; this.atBase=true;}
+
+        // Attack base
+        if(this.atBase){
+            if(this.side==='player') enemyBaseHP -= this.stats.damage*0.05;
+            else playerBaseHP -= this.stats.damage*0.05;
+        }
+
+        // Animate
+        this.step +=0.2;
+    }
+
+    draw(){
+        // body size dynamically
+        const unitWidth=canvas.width*0.02; const unitHeight=canvas.height*0.06;
+        const legSwing=Math.sin(this.step)*unitHeight*0.3;
+
+        // Draw legs
+        ctx.strokeStyle=this.side==='player'?'#00ffff':'#ff3c7c'; ctx.lineWidth=2;
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.x - unitWidth/2, this.y + unitHeight/2 + legSwing);
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.x + unitWidth/2, this.y + unitHeight/2 - legSwing);
+        ctx.stroke();
+
+        // Draw torso
+        ctx.fillStyle=this.side==='player'?'#00ffff':'#ff3c7c';
+        ctx.fillRect(this.x-unitWidth/2, this.y-unitHeight, unitWidth, unitHeight*0.7);
+
+        // Draw head
+        ctx.beginPath(); ctx.fillStyle=this.side==='player'?'#00ffff':'#ff3c7c';
+        ctx.arc(this.x, this.y-unitHeight, unitWidth/2,0,Math.PI*2); ctx.fill();
+
+        // Weapon / arm animation
+        if(this.type==='warrior'){ ctx.strokeStyle='#fff'; ctx.beginPath();
+            ctx.moveTo(this.x, this.y-unitHeight*0.5); ctx.lineTo(this.x + Math.sin(this.step)*unitWidth, this.y-unitHeight*0.5); ctx.stroke();}
+        if(this.type==='archer'){ ctx.strokeStyle='#0f0'; ctx.beginPath();
+            ctx.moveTo(this.x, this.y-unitHeight*0.5); ctx.lineTo(this.x + Math.sin(this.step)*unitWidth*0.8, this.y-unitHeight*0.5); ctx.stroke();}
+        if(this.type==='tank'){ ctx.strokeStyle='#fff'; ctx.beginPath();
+            ctx.moveTo(this.x, this.y-unitHeight*0.5); ctx.lineTo(this.x + Math.sin(this.step)*unitWidth*0.5, this.y-unitHeight*0.5); ctx.stroke(); }
+
+        // Health bar
+        ctx.fillStyle='red'; ctx.fillRect(this.x-unitWidth, this.y-unitHeight-10, unitWidth*2,4);
+        ctx.fillStyle='lime'; ctx.fillRect(this.x-unitWidth, this.y-unitHeight-10, unitWidth*2*(this.hp/this.stats.hp),4);
+    }
 }
 
-function spawnUnit(type){if(gameOver)return;if(gold>=types[type].cost){gold-=types[type].cost;units.push(new Unit(type,'player'));updateUI();}}
+function spawnUnit(type){ if(gameOver) return; if(gold>=types[type].cost){ gold-=types[type].cost; units.push(new Unit(type,'player')); updateUI(); } }
+
 function buyOrUpgradeWeapon(){
-if(gameOver)return;
-const btn=document.getElementById('weaponButton');
-if(!weaponPurchased){
-if(gold>=30){gold-=30;weaponPurchased=true;weaponLevel=0;updateWeaponButton();updateUI();}
-}else{
-if(weaponLevel===0 && gold>=50){gold-=50;weapon.damage+=15;weaponLevel++;updateWeaponButton();updateUI();}
-else if(weaponLevel===1 && gold>=100){gold-=100;weapon.damage+=20;weaponLevel++;updateWeaponButton();updateUI();}
-else if(weaponLevel===2 && gold>=200){gold-=200;weapon.range=canvas.width*0.5;weaponLevel++;updateWeaponButton();updateUI();}
-}
+    if(gameOver) return;
+    const btn=document.getElementById('weaponButton');
+    if(!weaponPurchased){
+        if(gold>=30){ gold-=30; weaponPurchased=true; weaponLevel=0; updateWeaponButton(); updateUI();}
+    } else {
+        if(weaponLevel===0 && gold>=50){ gold-=50; weapon.damage+=15; weaponLevel++; updateWeaponButton(); updateUI();}
+        else if(weaponLevel===1 && gold>=100){ gold-=100; weapon.damage+=20; weaponLevel++; updateWeaponButton(); updateUI();}
+        else if(weaponLevel===2 && gold>=200){ gold-=200; weapon.range=canvas.width*0.5; weaponLevel++; updateWeaponButton(); updateUI();}
+    }
 }
 
 function updateWeaponButton(){
-const btn=document.getElementById('weaponButton');
-if(!weaponPurchased){btn.textContent='Buy Weapon (30)';return;}
-if(weaponLevel===0) btn.textContent='Upgrade Weapon (50)';
-else if(weaponLevel===1) btn.textContent='Upgrade Weapon (100)';
-else if(weaponLevel===2) btn.textContent='Upgrade Weapon (200)';
-else btn.style.display='none';
+    const btn=document.getElementById('weaponButton');
+    if(!weaponPurchased){ btn.textContent='Buy Weapon (30)'; return; }
+    if(weaponLevel===0) btn.textContent='Upgrade Weapon (50)';
+    else if(weaponLevel===1) btn.textContent='Upgrade Weapon (100)';
+    else if(weaponLevel===2) btn.textContent='Upgrade Weapon (200)';
+    else btn.style.display='none';
 }
 
-function spawnEnemy(){if(gameOver)return;let r=Math.random(),type;if(r<0.5)type='warrior';else if(r<0.8)type='archer';else type='tank';units.push(new Unit(type,'enemy'));}
+function spawnEnemy(){
+    if(gameOver) return;
+    let r=Math.random(), type;
+    if(r<0.5) type='warrior';
+    else if(r<0.8) type='archer';
+    else type='tank';
+    units.push(new Unit(type,'enemy'));
+}
 setInterval(spawnEnemy,2500);
 
-function updateUI(){document.getElementById('gold').textContent=Math.floor(gold);document.getElementById('playerHP').textContent=Math.floor(playerBaseHP);document.getElementById('enemyHP').textContent=Math.floor(enemyBaseHP);}
-function checkGameOver(){if(playerBaseHP<=0 || enemyBaseHP<=0){gameOver=true;document.getElementById('gameOverScreen').style.display='flex';document.getElementById('gameOverText').textContent=playerBaseHP<=0?'Defeat':'Victory';}}
+function updateUI(){
+    document.getElementById('gold').textContent=Math.floor(gold);
+    document.getElementById('playerHP').textContent=Math.floor(playerBaseHP);
+    document.getElementById('enemyHP').textContent=Math.floor(enemyBaseHP);
+}
+
+function checkGameOver(){
+    if(playerBaseHP<=0 || enemyBaseHP<=0){
+        gameOver=true;
+        document.getElementById('gameOverScreen').style.display='flex';
+        document.getElementById('gameOverText').textContent = playerBaseHP<=0?'Defeat':'Victory';
+    }
+}
 
 function drawBases(){
-ctx.fillStyle='#00ffff';ctx.fillRect(40,groundY()-60,60,60);
-if(weaponPurchased){
-ctx.save();ctx.translate(70,groundY()-60);
-let nearest=units.filter(u=>u.side==='enemy' && u.x<40+weapon.range).sort((a,b)=>Math.abs(a.x-70)-Math.abs(b.x-70))[0];
-let angle=0;if(nearest) angle=Math.atan2(nearest.y-(groundY()-60),nearest.x-70);
-ctx.rotate(angle);ctx.fillStyle='#00ffff';ctx.fillRect(0,-5,30,10);ctx.restore();
-}
-ctx.fillStyle='#ff3c7c';ctx.fillRect(canvas.width-100,groundY()-60,60,60);
+    const baseWidth=canvas.width*0.06; const baseHeight=canvas.height*0.08;
+    // Player base
+    ctx.fillStyle='#00ffff'; ctx.fillRect(40, groundY()-baseHeight, baseWidth, baseHeight);
+    // Weapon
+    if(weaponPurchased){
+        ctx.save(); ctx.translate(40+baseWidth/2, groundY()-baseHeight);
+        let nearest=units.filter(u=>u.side==='enemy' && u.x<40+weapon.range).sort((a,b)=>Math.abs(a.x-(40+baseWidth/2))-Math.abs(b.x-(40+baseWidth/2)))[0];
+        let angle=0; if(nearest) angle=Math.atan2(nearest.y-(groundY()-baseHeight), nearest.x-(40+baseWidth/2));
+        ctx.rotate(angle); ctx.fillStyle='#0ff'; ctx.fillRect(0,-baseHeight*0.08, baseWidth*0.8, baseHeight*0.16); ctx.restore();
+    }
+    // Enemy base
+    ctx.fillStyle='#ff3c7c'; ctx.fillRect(canvas.width-100, groundY()-baseHeight, baseWidth, baseHeight);
 }
 
 function fireWeapon(){
-if(!weaponPurchased)return;weaponCooldown-=16;
-if(weaponCooldown<=0){
-let nearest=units.filter(u=>u.side==='enemy' && u.x<40+weapon.range).sort((a,b)=>Math.abs(a.x-70)-Math.abs(b.x-70))[0];
-if(nearest){nearest.hp-=weapon.damage;if(nearest.hp<=0){gold+=nearest.stats.reward;units=units.filter(u=>u!==nearest);updateUI();}weaponCooldown=300;}
-}
+    if(!weaponPurchased) return; weaponCooldown-=16;
+    if(weaponCooldown<=0){
+        let nearest=units.filter(u=>u.side==='enemy' && u.x<40+weapon.range).sort((a,b)=>Math.abs(a.x-70)-Math.abs(b.x-70))[0];
+        if(nearest){ nearest.hp -= weapon.damage; if(nearest.hp<=0){ gold+=nearest.stats.reward; units=units.filter(u=>u!==nearest); updateUI(); } weaponCooldown=300; }
+    }
 }
 
-function gameLoop(){ctx.clearRect(0,0,canvas.width,canvas.height);drawBases();units.forEach(u=>u.update());units.forEach(u=>u.draw());fireWeapon();updateUI();checkGameOver();requestAnimationFrame(gameLoop);}
-function restartGame(){gold=100;playerBaseHP=1000;enemyBaseHP=1000;units=[];gameOver=false;weaponPurchased=false;weaponLevel=0;weaponCooldown=0;document.getElementById('weaponButton').style.display='inline';updateWeaponButton();document.getElementById('gameOverScreen').style.display='none';updateUI();}
-updateUI();gameLoop();
+function gameLoop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawBases();
+    for(let i=0;i<units.length;i++){ units[i].update(units[i-1]); }
+    units.forEach(u=>u.draw());
+    fireWeapon(); updateUI(); checkGameOver();
+    requestAnimationFrame(gameLoop);
+}
+
+function restartGame(){
+    gold=100; playerBaseHP=1000; enemyBaseHP=1000; units=[]; gameOver=false;
+    weaponPurchased=false; weaponLevel=0; weaponCooldown=0;
+    const btn=document.getElementById('weaponButton'); btn.style.display='inline'; updateWeaponButton();
+    document.getElementById('gameOverScreen').style.display='none'; updateUI();
+}
+
+updateUI(); gameLoop();
 </script>
 
 </body>
