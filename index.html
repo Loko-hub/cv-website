@@ -3,243 +3,235 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Mini Age of War - Advanced</title>
+<title>Mini Age of War - Base Weapon</title>
 
 <style>
 html, body {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    background: #0b0f14;
+    margin:0;
+    padding:0;
+    overflow:hidden;
+    background: #0b0f1a;
     font-family: Arial, sans-serif;
     touch-action: none;
 }
-
 canvas { display: block; }
-
-.ui {
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: #00ffff;
-    text-align: center;
-    font-size: 14px;
+#ui {
+    position: fixed;
+    top:0;
+    width:100%;
+    padding:10px;
+    background: rgba(0,0,0,0.7);
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    box-sizing:border-box;
+    color:#00ffff;
+    font-size:14px;
 }
-
 button {
-    margin: 4px;
-    padding: 8px 14px;
-    background: #00ffff;
-    border: none;
-    color: black;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.gameover {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    background: #00ffff22;
+    border: 1px solid #00ffff;
     color: #00ffff;
-    font-size: 28px;
-    text-align: center;
-    display: none;
+    padding: 6px 10px;
+    border-radius:6px;
+    margin-left:5px;
+    font-size:14px;
+}
+button:active { background:#00ffff55; }
+#gameOverScreen {
+    position: fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:#000c;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    font-size:28px;
+    display:none;
 }
 </style>
 </head>
-
 <body>
 
-<div class="ui">
-    Gold: <span id="gold">100</span> |
-    Player HP: <span id="playerHP">1000</span> |
-    Enemy HP: <span id="enemyHP">1000</span>
-    <br>
-    <button onclick="spawnUnit('warrior')">Warrior (10)</button>
-    <button onclick="spawnUnit('archer')">Archer (20)</button>
-    <button onclick="spawnUnit('tank')">Tank (50)</button>
+<div id="ui">
+    <div>
+        💰 Gold: <span id="gold">100</span> |
+        🏰 HP: <span id="playerHP">1000</span> vs <span id="enemyHP">1000</span>
+    </div>
+    <div>
+        <button onclick="spawnUnit('warrior')">Warrior (10)</button>
+        <button onclick="spawnUnit('archer')">Archer (20)</button>
+        <button onclick="spawnUnit('tank')">Tank (50)</button>
+        <button onclick="buyWeapon()">Buy Weapon (30)</button>
+    </div>
 </div>
 
-<div class="gameover" id="gameOverScreen">
+<div id="gameOverScreen">
     <div id="gameOverText"></div>
     <button onclick="restartGame()">Restart</button>
 </div>
 
-<canvas id="gameCanvas"></canvas>
+<canvas id="game"></canvas>
 
 <script>
-const canvas = document.getElementById("gameCanvas");
+const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-let dpi = window.devicePixelRatio || 1;
-
-function resizeCanvas() {
-    canvas.width = window.innerWidth * dpi;
-    canvas.height = window.innerHeight * dpi;
-    canvas.style.width = window.innerWidth + "px";
-    canvas.style.height = window.innerHeight + "px";
-    ctx.setTransform(dpi, 0, 0, dpi, 0, 0);
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 }
-window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
+resize();
+window.addEventListener("resize", resize);
 
-const groundY = () => window.innerHeight * 0.75;
-
-let gold = 10;
+let gold = 100;
 let playerBaseHP = 1000;
 let enemyBaseHP = 1000;
 let units = [];
-let gameRunning = true;
+let gameOver = false;
+let weaponPurchased = false;
+let weaponCooldown = 0;
 
-const UNIT_STATS = {
-    warrior: { hp: 120, damage: 20, speed: 1.2, range: 0, cost: 10, reward: 10 },
-    archer:  { hp: 70,  damage: 15, speed: 1, range: 120, cost: 20, reward: 20 },
-    tank:    { hp: 300, damage: 40, speed: 0.6, range: 0, cost: 50, reward: 50 }
+const groundY = () => canvas.height - 80;
+
+const types = {
+    warrior: { hp:120, damage:12, speed:1.2, range:20, cost:10, reward:10 },
+    archer: { hp:70, damage:8, speed:1.0, range:140, cost:20, reward:20 },
+    tank: { hp:350, damage:30, speed:0.6, range:25, cost:50, reward:40 }
 };
 
 class Unit {
-    constructor(type, isPlayer) {
+    constructor(type, side) {
         this.type = type;
-        this.isPlayer = isPlayer;
-        const stats = UNIT_STATS[type];
-        this.hp = stats.hp;
-        this.maxHp = stats.hp;
-        this.damage = stats.damage;
-        this.speed = isPlayer ? stats.speed : -stats.speed;
-        this.range = stats.range;
-        this.reward = stats.reward;
-
-        this.width = 30;
-        this.height = 50;
-        this.x = isPlayer ? 60 : window.innerWidth - 90;
+        this.side = side;
+        this.stats = types[type];
+        this.hp = this.stats.hp;
+        this.x = side === "player" ? 120 : canvas.width - 120;
         this.y = groundY();
-        this.attackCooldown = 0;
+    }
+
+    update() {
+        if (gameOver) return;
+        let target = units.find(u => u.side !== this.side && Math.abs(u.x - this.x) <= this.stats.range);
+        if (target) {
+            target.hp -= this.stats.damage*0.02;
+            if (target.hp <=0){
+                if(target.side==='enemy') { gold += target.stats.reward; updateUI();}
+                units = units.filter(u=>u!==target);
+            }
+        } else { this.x += this.side==='player'? this.stats.speed : -this.stats.speed; }
+
+        if(this.side==='player' && this.x>canvas.width-80){ enemyBaseHP -= this.stats.damage*0.05; this.hp=0; }
+        if(this.side==='enemy' && this.x<80){ playerBaseHP -= this.stats.damage*0.05; this.hp=0; }
     }
 
     draw() {
-        ctx.fillStyle = this.isPlayer ? "#00ffff" : "#ff0066";
-        ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
+        if(this.type==='warrior'){ ctx.fillStyle=this.side==='player'? '#00ffff':'#ff3c7c'; ctx.fillRect(this.x-15,this.y-40,30,40); }
+        if(this.type==='archer'){ ctx.fillStyle=this.side==='player'? '#00ffff':'#ff3c7c'; ctx.fillRect(this.x-8,this.y-35,16,35);
+            ctx.strokeStyle='#00ff00'; ctx.beginPath(); ctx.moveTo(this.x,this.y-20); ctx.lineTo(this.x+(this.side==='player'?1:-1)*20,this.y-25); ctx.stroke(); }
+        if(this.type==='tank'){ ctx.fillStyle=this.side==='player'? '#00ffff':'#ff3c7c'; ctx.fillRect(this.x-20,this.y-45,40,45); ctx.strokeStyle='#fff'; ctx.strokeRect(this.x-20,this.y-45,40,45); }
 
-        ctx.fillStyle = "red";
-        ctx.fillRect(this.x, this.y - this.height - 8, this.width, 4);
-        ctx.fillStyle = "lime";
-        ctx.fillRect(this.x, this.y - this.height - 8, this.width * (this.hp / this.maxHp), 4);
-    }
-
-    update(delta) {
-        if (!gameRunning) return;
-
-        let enemy = units.find(u =>
-            u.isPlayer !== this.isPlayer &&
-            Math.abs(u.x - this.x) <= (this.range || this.width)
-        );
-
-        if (enemy) {
-            if (this.attackCooldown <= 0) {
-                enemy.hp -= this.damage;
-                this.attackCooldown = 700;
-            }
-        } else {
-            this.x += this.speed;
-        }
-
-        if (this.attackCooldown > 0) this.attackCooldown -= delta;
-        this.draw();
+        // Health bar
+        ctx.fillStyle='red';
+        ctx.fillRect(this.x-20,this.y-50,40,5);
+        ctx.fillStyle='lime';
+        ctx.fillRect(this.x-20,this.y-50,40*(this.hp/this.stats.hp),5);
     }
 }
 
-function spawnUnit(type) {
-    if (!gameRunning) return;
-    const cost = UNIT_STATS[type].cost;
-    if (gold >= cost) {
-        gold -= cost;
-        units.push(new Unit(type, true));
+function spawnUnit(type){ if(gameOver)return; if(gold>=types[type].cost){ gold-=types[type].cost; units.push(new Unit(type,'player')); updateUI(); } }
+
+function buyWeapon(){
+    if(gameOver || weaponPurchased) return;
+    if(gold>=30){ gold-=30; weaponPurchased=true; updateUI(); }
+}
+
+function spawnEnemy(){
+    if(gameOver)return;
+    let r=Math.random(); let type;
+    if(r<0.5) type='warrior';
+    else if(r<0.8) type='archer';
+    else type='tank';
+    units.push(new Unit(type,'enemy'));
+}
+setInterval(spawnEnemy,2500);
+
+function updateUI(){
+    document.getElementById('gold').textContent=Math.floor(gold);
+    document.getElementById('playerHP').textContent=Math.floor(playerBaseHP);
+    document.getElementById('enemyHP').textContent=Math.floor(enemyBaseHP);
+}
+
+function checkGameOver(){
+    if(playerBaseHP<=0 || enemyBaseHP<=0){
+        gameOver=true;
+        document.getElementById('gameOverScreen').style.display='flex';
+        document.getElementById('gameOverText').textContent=playerBaseHP<=0?'Defeat':'Victory';
     }
 }
 
-function spawnEnemy() {
-    if (!gameRunning) return;
-
-    const rand = Math.random();
-    let type;
-    if (rand < 0.5) type = "warrior";
-    else if (rand < 0.8) type = "archer";
-    else type = "tank";
-
-    units.push(new Unit(type, false));
-}
-
-setInterval(spawnEnemy, 2500);
-
-let lastTime = 0;
-
-function gameLoop(timestamp) {
-    let delta = timestamp - lastTime;
-    lastTime = timestamp;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#00ffff";
-    ctx.fillRect(10, groundY() - 120, 50, 120);
-
-    ctx.fillStyle = "#ff0066";
-    ctx.fillRect(window.innerWidth - 60, groundY() - 120, 50, 120);
-
-    units.forEach(unit => unit.update(delta));
-
-    // Handle deaths and gold rewards
-    units = units.filter(unit => {
-        if (unit.hp <= 0) {
-            if (!unit.isPlayer) gold += unit.reward;
-            return false;
-        }
-        return true;
-    });
-
-    // Base damage
-    units.forEach(unit => {
-        if (unit.isPlayer && unit.x + unit.width >= window.innerWidth - 60) {
-            enemyBaseHP -= unit.damage;
-            unit.hp = 0;
-        }
-        if (!unit.isPlayer && unit.x <= 60) {
-            playerBaseHP -= unit.damage;
-            unit.hp = 0;
-        }
-    });
-
-    document.getElementById("gold").innerText = gold;
-    document.getElementById("playerHP").innerText = playerBaseHP;
-    document.getElementById("enemyHP").innerText = enemyBaseHP;
-
-    if (playerBaseHP <= 0 || enemyBaseHP <= 0) {
-        gameRunning = false;
-        showGameOver();
+function drawBases(){
+    // Player base
+    ctx.fillStyle='#00ffff';
+    ctx.fillRect(40, groundY()-60, 60,60);
+    // Weapon if purchased
+    if(weaponPurchased){
+        ctx.save();
+        ctx.translate(70, groundY()-60);
+        let angle = Math.sin(Date.now()/200)*0.5;
+        ctx.rotate(angle);
+        ctx.fillStyle='#00ffff';
+        ctx.fillRect(0,-5,30,10);
+        ctx.restore();
     }
 
+    // Enemy base
+    ctx.fillStyle='#ff3c7c';
+    ctx.fillRect(canvas.width-100, groundY()-60, 60,60);
+}
+
+function fireWeapon(){
+    if(!weaponPurchased) return;
+    weaponCooldown -=16;
+    if(weaponCooldown<=0){
+        // Find nearest enemy in range (canvas width/2)
+        let target = units.filter(u=>u.side==='enemy' && u.x>0).sort((a,b)=>Math.abs(a.x-70)-Math.abs(b.x-70))[0];
+        if(target){
+            target.hp -=40;
+            if(target.hp<=0){ gold+=target.stats.reward; units=units.filter(u=>u!==target); updateUI(); }
+            weaponCooldown=300; // 0.3s cooldown
+        }
+    }
+}
+
+function gameLoop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawBases();
+    units.forEach(u=>u.update());
+    units.forEach(u=>u.draw());
+    fireWeapon();
+    updateUI();
+    checkGameOver();
     requestAnimationFrame(gameLoop);
 }
 
-function showGameOver() {
-    const screen = document.getElementById("gameOverScreen");
-    const text = document.getElementById("gameOverText");
-    text.innerText = playerBaseHP <= 0 ? "Defeat" : "Victory!";
-    screen.style.display = "block";
+function restartGame(){
+    gold=100;
+    playerBaseHP=1000;
+    enemyBaseHP=1000;
+    units=[];
+    gameOver=false;
+    weaponPurchased=false;
+    weaponCooldown=0;
+    document.getElementById('gameOverScreen').style.display='none';
+    updateUI();
 }
 
-function restartGame() {
-    gold = 10;
-    playerBaseHP = 1000;
-    enemyBaseHP = 1000;
-    units = [];
-    gameRunning = true;
-    document.getElementById("gameOverScreen").style.display = "none";
-}
-
-requestAnimationFrame(gameLoop);
+updateUI();
+gameLoop();
 </script>
-
 </body>
 </html>
