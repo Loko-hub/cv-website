@@ -3,62 +3,75 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Interactive Particle Universe</title>
+<title>Mini Age of War</title>
 
 <style>
-    html, body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        background: radial-gradient(circle at center, #0f2027, #000000);
-        font-family: Arial, sans-serif;
-        touch-action: none;
-    }
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #0b0f14;
+    font-family: Arial, sans-serif;
+    touch-action: none;
+}
 
-    canvas {
-        display: block;
-    }
+canvas {
+    display: block;
+}
 
-    .overlay {
-        position: absolute;
-        top: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-        color: white;
-        text-align: center;
-        letter-spacing: 2px;
-        font-size: 18px;
-        opacity: 0.8;
-        pointer-events: none;
-    }
+.ui {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #00ffff;
+    text-align: center;
+    font-size: 14px;
+}
 
-    .victory {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        color: #00ffff;
-        font-size: 32px;
-        text-align: center;
-        display: none;
-        text-shadow: 0 0 20px #00ffff;
-    }
+button {
+    margin-top: 8px;
+    padding: 8px 16px;
+    background: #00ffff;
+    border: none;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.gameover {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #00ffff;
+    font-size: 28px;
+    text-align: center;
+    display: none;
+}
 </style>
 </head>
+
 <body>
 
-<div class="overlay">Move • Touch • Click to bend space</div>
-<div class="victory" id="victoryText">
-    Congratulations,<br>
-    you destroyed your universe!
+<div class="ui">
+    Gold: <span id="gold">0</span> |
+    Player HP: <span id="playerHP">1000</span> |
+    Enemy HP: <span id="enemyHP">1000</span>
+    <br>
+    <button id="spawnBtn">Spawn Unit (Cost: 50)</button>
 </div>
 
-<canvas id="canvas"></canvas>
+<div class="gameover" id="gameOverScreen">
+    <div id="gameOverText"></div>
+    <button onclick="restartGame()">Restart</button>
+</div>
+
+<canvas id="gameCanvas"></canvas>
 
 <script>
-const canvas = document.getElementById("canvas");
+const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-const victoryText = document.getElementById("victoryText");
 
 let dpi = window.devicePixelRatio || 1;
 
@@ -69,143 +82,150 @@ function resizeCanvas() {
     canvas.style.height = window.innerHeight + "px";
     ctx.setTransform(dpi, 0, 0, dpi, 0, 0);
 }
-
-resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
 
-let mouse = {
-    x: window.innerWidth / 2,
-    y: window.innerHeight / 2,
-    radius: 140
-};
+const groundY = () => window.innerHeight * 0.75;
 
-// Desktop
-window.addEventListener("mousemove", (e) => {
-    mouse.x = e.clientX;
-    mouse.y = e.clientY;
-});
+let gold = 0;
+let playerBaseHP = 1000;
+let enemyBaseHP = 1000;
+let units = [];
+let gameRunning = true;
 
-// Mobile
-window.addEventListener("touchmove", (e) => {
-    mouse.x = e.touches[0].clientX;
-    mouse.y = e.touches[0].clientY;
-}, { passive: true });
+const UNIT_COST = 50;
+const GOLD_RATE = 10;
+const ENEMY_SPAWN_INTERVAL = 2500;
 
-let shockwaves = [];
-
-window.addEventListener("click", createShockwave);
-window.addEventListener("touchstart", (e) => {
-    createShockwave(e.touches[0]);
-});
-
-function createShockwave(e) {
-    shockwaves.push({
-        x: e.clientX,
-        y: e.clientY,
-        radius: 0,
-        maxRadius: 350
-    });
-}
-
-class Particle {
-    constructor() {
-        this.x = Math.random() * window.innerWidth;
-        this.y = Math.random() * window.innerHeight;
-        this.size = Math.random() * 2 + 1;
-        this.vx = (Math.random() - 0.5) * 0.8;
-        this.vy = (Math.random() - 0.5) * 0.8;
-        this.density = Math.random() * 30 + 10;
+class Unit {
+    constructor(x, isPlayer) {
+        this.x = x;
+        this.y = groundY();
+        this.width = 30;
+        this.height = 50;
+        this.hp = 100;
+        this.maxHp = 100;
+        this.speed = isPlayer ? 1 : -1;
+        this.isPlayer = isPlayer;
+        this.attackCooldown = 0;
     }
 
     draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(0,255,255,0.9)";
-        ctx.shadowColor = "#00ffff";
-        ctx.shadowBlur = 15;
-        ctx.fill();
+        ctx.fillStyle = this.isPlayer ? "#00ffff" : "#ff0066";
+        ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
+
+        // Health bar
+        ctx.fillStyle = "red";
+        ctx.fillRect(this.x, this.y - this.height - 10, this.width, 5);
+        ctx.fillStyle = "lime";
+        ctx.fillRect(this.x, this.y - this.height - 10, this.width * (this.hp / this.maxHp), 5);
     }
 
-    update() {
-        let dx = mouse.x - this.x;
-        let dy = mouse.y - this.y;
-        let distance = Math.sqrt(dx * dx + dy * dy);
+    update(delta) {
+        if (!gameRunning) return;
 
-        if (distance < mouse.radius) {
-            let forceX = dx / distance;
-            let forceY = dy / distance;
-            let force = (mouse.radius - distance) / mouse.radius;
-            this.x -= forceX * force * this.density * 0.6;
-            this.y -= forceY * force * this.density * 0.6;
+        let target = units.find(u => u.isPlayer !== this.isPlayer && Math.abs(u.x - this.x) < this.width);
+
+        if (target) {
+            if (this.attackCooldown <= 0) {
+                target.hp -= 20;
+                this.attackCooldown = 500;
+            }
+        } else {
+            this.x += this.speed;
         }
 
-        shockwaves.forEach(wave => {
-            let dx = this.x - wave.x;
-            let dy = this.y - wave.y;
-            let dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < wave.radius && dist > wave.radius - 25) {
-                this.x += dx * 0.06;
-                this.y += dy * 0.06;
-            }
-        });
-
-        this.x += this.vx;
-        this.y += this.vy;
+        if (this.attackCooldown > 0) this.attackCooldown -= delta;
 
         this.draw();
     }
+}
 
-    isOffScreen() {
-        return (
-            this.x < -50 ||
-            this.x > window.innerWidth + 50 ||
-            this.y < -50 ||
-            this.y > window.innerHeight + 50
-        );
+function spawnPlayerUnit() {
+    if (gold >= UNIT_COST && gameRunning) {
+        gold -= UNIT_COST;
+        units.push(new Unit(50, true));
     }
 }
 
-let particles = [];
-const particleCount = 400;
-
-function init() {
-    particles = [];
-    for (let i = 0; i < particleCount; i++) {
-        particles.push(new Particle());
-    }
-    victoryText.style.display = "none";
+function spawnEnemyUnit() {
+    if (!gameRunning) return;
+    units.push(new Unit(window.innerWidth - 80, false));
 }
 
-function animate() {
+document.getElementById("spawnBtn").addEventListener("click", spawnPlayerUnit);
+document.getElementById("spawnBtn").addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    spawnPlayerUnit();
+}, { passive: false });
+
+setInterval(() => {
+    if (gameRunning) gold += GOLD_RATE;
+}, 1000);
+
+setInterval(spawnEnemyUnit, ENEMY_SPAWN_INTERVAL);
+
+let lastTime = 0;
+
+function gameLoop(timestamp) {
+    let delta = timestamp - lastTime;
+    lastTime = timestamp;
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    shockwaves.forEach((wave, index) => {
-        wave.radius += 6;
-        ctx.beginPath();
-        ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(0,255,255,0.2)";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        if (wave.radius > wave.maxRadius) {
-            shockwaves.splice(index, 1);
+    // Draw bases
+    ctx.fillStyle = "#00ffff";
+    ctx.fillRect(10, groundY() - 100, 40, 100);
+
+    ctx.fillStyle = "#ff0066";
+    ctx.fillRect(window.innerWidth - 50, groundY() - 100, 40, 100);
+
+    units.forEach(unit => unit.update(delta));
+
+    // Remove dead units
+    units = units.filter(unit => unit.hp > 0);
+
+    // Base damage
+    units.forEach(unit => {
+        if (unit.isPlayer && unit.x + unit.width >= window.innerWidth - 50) {
+            enemyBaseHP -= 10;
+            unit.hp = 0;
+        }
+        if (!unit.isPlayer && unit.x <= 50) {
+            playerBaseHP -= 10;
+            unit.hp = 0;
         }
     });
 
-    particles.forEach(p => p.update());
+    document.getElementById("gold").innerText = gold;
+    document.getElementById("playerHP").innerText = playerBaseHP;
+    document.getElementById("enemyHP").innerText = enemyBaseHP;
 
-    // Remove particles that left screen
-    particles = particles.filter(p => !p.isOffScreen());
-
-    // Victory condition
-    if (particles.length === 0) {
-        victoryText.style.display = "block";
+    if (playerBaseHP <= 0 || enemyBaseHP <= 0) {
+        gameRunning = false;
+        showGameOver();
     }
 
-    requestAnimationFrame(animate);
+    requestAnimationFrame(gameLoop);
 }
 
-init();
-animate();
+function showGameOver() {
+    const screen = document.getElementById("gameOverScreen");
+    const text = document.getElementById("gameOverText");
+    text.innerText = playerBaseHP <= 0 ? "Defeat" : "Victory!";
+    screen.style.display = "block";
+}
+
+function restartGame() {
+    gold = 0;
+    playerBaseHP = 1000;
+    enemyBaseHP = 1000;
+    units = [];
+    gameRunning = true;
+    document.getElementById("gameOverScreen").style.display = "none";
+}
+
+requestAnimationFrame(gameLoop);
 </script>
 
 </body>
