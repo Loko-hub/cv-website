@@ -1,215 +1,330 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Constructora Tucumán | Construcción y Remodelación</title>
+<title>Álvaro Rohde García | Professional Portfolio</title>
+
 <style>
-* { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', sans-serif; }
-body { background:#f4f6f9; color:#222; }
-header {
-    background: linear-gradient(120deg,#1e3c72,#2a5298);
-    color:white;
-    padding:20px 40px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-}
-header h1 { font-size:22px; }
-nav a {
-    color:white;
-    text-decoration:none;
-    margin-left:20px;
-    font-weight:500;
-}
-nav a:hover { text-decoration:underline; }
-
-section { padding:80px 10%; }
-
-.hero {
-    background:url('https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
-    height:80vh;
-    display:flex;
-    align-items:center;
-    color:white;
-    text-align:left;
-    position:relative;
-}
-.hero::before {
-    content:'';
-    position:absolute;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.55);
-}
-.hero-content {
-    position:relative;
-    max-width:600px;
-}
-.hero h2 { font-size:48px; margin-bottom:20px; }
-.hero p { font-size:18px; margin-bottom:30px; }
-.hero button {
-    padding:12px 24px;
-    font-size:16px;
-    background:#ff9800;
-    border:none;
-    border-radius:6px;
-    color:white;
-    cursor:pointer;
-}
-.hero button:hover { background:#e68900; }
-
-.about, .services {
-    background:white;
-    margin-bottom:40px;
-    border-radius:10px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+:root{
+--accent:#00d4ff;
+--bg:#0c0f1c;
+--card:#151a2e;
+--text:#e8ecf1;
 }
 
-.about h2, .services h2 { margin-bottom:20px; color:#1e3c72; }
-
-.services-grid {
-    display:grid;
-    grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
-    gap:20px;
-}
-.service-card {
-    background:#f8fafc;
-    padding:20px;
-    border-radius:8px;
-    transition:0.3s;
-}
-.service-card:hover {
-    transform:translateY(-5px);
-    box-shadow:0 8px 20px rgba(0,0,0,0.1);
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+font-family:Segoe UI, sans-serif;
+background:var(--bg);
+color:var(--text);
+overflow-x:hidden;
+scroll-behavior:smooth;
 }
 
-.form-section {
-    background: linear-gradient(120deg,#2a5298,#1e3c72);
-    color:white;
-}
-.form-container {
-    background:white;
-    color:black;
-    padding:30px;
-    border-radius:10px;
-    max-width:600px;
-    margin:auto;
-}
-form input, form textarea, form select {
-    width:100%;
-    padding:10px;
-    margin-bottom:15px;
-    border-radius:6px;
-    border:1px solid #ccc;
-}
-form button {
-    background:#1e3c72;
-    color:white;
-    padding:10px 20px;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-}
-form button:hover { background:#16305a; }
+section{padding:100px 10%; min-height:100vh;}
+h1,h2,h3{margin-bottom:20px;}
+button{cursor:pointer;}
 
-footer {
-    text-align:center;
-    padding:20px;
-    background:#111;
-    color:white;
-    margin-top:40px;
+nav{
+position:fixed;
+top:0;
+width:100%;
+background:rgba(12,15,28,0.8);
+backdrop-filter:blur(10px);
+display:flex;
+justify-content:center;
+gap:30px;
+padding:15px;
+z-index:1000;
+}
+nav a{
+color:var(--text);
+text-decoration:none;
+font-size:14px;
+letter-spacing:1px;
+}
+nav a:hover{color:var(--accent);}
+
+.hero{
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+text-align:center;
+background:radial-gradient(circle at 30% 30%, #1c2240, #0c0f1c);
+position:relative;
+overflow:hidden;
+}
+
+.hero h1{
+font-size:48px;
+background:linear-gradient(90deg,var(--accent),#6f8cff);
+-webkit-background-clip:text;
+color:transparent;
+}
+
+.hero p{
+max-width:700px;
+margin:20px auto;
+font-size:18px;
+opacity:0.9;
+}
+
+.cta-buttons{
+margin-top:30px;
+}
+.cta-buttons a{
+padding:12px 24px;
+border:1px solid var(--accent);
+border-radius:30px;
+margin:0 10px;
+color:var(--accent);
+text-decoration:none;
+transition:0.3s;
+}
+.cta-buttons a:hover{
+background:var(--accent);
+color:#000;
+}
+
+.card{
+background:var(--card);
+padding:25px;
+border-radius:12px;
+margin-bottom:20px;
+transition:0.3s;
+}
+.card:hover{
+transform:translateY(-5px);
+box-shadow:0 10px 30px rgba(0,0,0,0.5);
+}
+
+.timeline{
+border-left:2px solid var(--accent);
+padding-left:20px;
+}
+.timeline-item{
+margin-bottom:40px;
+cursor:pointer;
+}
+.timeline-item h3{
+color:var(--accent);
+}
+.timeline-content{
+max-height:0;
+overflow:hidden;
+transition:0.4s;
+}
+.timeline-item.active .timeline-content{
+max-height:300px;
+margin-top:10px;
+}
+
+.map-container{
+margin-top:40px;
+text-align:center;
+}
+svg{
+max-width:100%;
+height:auto;
+}
+.country{
+fill:#2b3158;
+stroke:#444;
+transition:0.3s;
+cursor:pointer;
+}
+.country:hover{
+fill:var(--accent);
+}
+
+.tooltip{
+position:absolute;
+background:#111;
+padding:10px;
+border-radius:6px;
+font-size:14px;
+pointer-events:none;
+opacity:0;
+transition:0.2s;
+}
+
+.publication-card{
+position:relative;
+overflow:hidden;
+}
+.abstract{
+max-height:0;
+overflow:hidden;
+transition:0.3s;
+opacity:0;
+}
+.publication-card:hover .abstract{
+max-height:200px;
+opacity:1;
+margin-top:10px;
+}
+
+.hobbies{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:20px;
+}
+.hobby{
+background:var(--card);
+padding:30px;
+border-radius:12px;
+text-align:center;
+transition:0.3s;
+cursor:pointer;
+}
+.hobby:hover{
+background:var(--accent);
+color:#000;
+transform:scale(1.05);
+}
+
+footer{
+text-align:center;
+padding:40px;
+opacity:0.5;
 }
 
 @media(max-width:768px){
-    .hero h2 { font-size:34px; }
+.hero h1{font-size:32px;}
 }
 </style>
 </head>
+
 <body>
 
-<header>
-<h1>Constructora Tucumán</h1>
 <nav>
-<a href="#inicio">Inicio</a>
-<a href="#about">Sobre Nosotros</a>
-<a href="#services">Servicios</a>
-<a href="#cotizacion">Cotización</a>
+<a href="#home">Home</a>
+<a href="#cv">CV</a>
+<a href="#international">International</a>
+<a href="#publications">Publications</a>
+<a href="#hobbies">Interests</a>
 </nav>
-</header>
 
-<section class="hero" id="inicio">
-<div class="hero-content">
-<h2>Construimos Confianza, Creamos Hogares</h2>
-<p>Empresa familiar de construcción en San Miguel de Tucumán con más de 20 años de experiencia.</p>
-<button onclick="document.getElementById('cotizacion').scrollIntoView({behavior:'smooth'})">
-Solicitar Cotización
-</button>
+<section class="hero" id="home">
+<h1>Álvaro Rohde García</h1>
+<p>
+Industrial Engineering graduate specializing in strategy, optimization, and international business.
+With academic excellence and global experience, I combine analytical thinking with entrepreneurial execution.
+My focus lies in building systems that create measurable impact — in sustainability, operations, and strategic growth.
+</p>
+<div class="cta-buttons">
+<a href="#cv">View CV</a>
+<a href="#publications">Publications</a>
 </div>
 </section>
 
-<section class="about" id="about">
-<h2>Sobre Nosotros</h2>
-<p>
-Somos una empresa familiar fundada en San Miguel de Tucumán, comprometida con la calidad, la transparencia y la excelencia en cada proyecto. 
-Durante más de dos décadas, hemos acompañado a familias y empresas en la construcción de sus hogares, oficinas y espacios comerciales.
-</p>
-<br>
-<p>
-Nuestro equipo combina experiencia técnica, pasión por la construcción y atención personalizada. 
-Creemos en relaciones de confianza a largo plazo, ofreciendo soluciones adaptadas a cada cliente, respetando plazos y presupuestos.
-</p>
-<br>
-<p>
-En Constructora Tucumán no solo construimos edificios, construimos sueños y futuro.
-</p>
-</section>
+<section id="cv">
+<h2>Curriculum Vitae</h2>
+<div class="timeline">
 
-<section class="services" id="services">
-<h2>Servicios</h2>
-<div class="services-grid">
-<div class="service-card">
-<h3>Construcción Residencial</h3>
-<p>Casas modernas, ampliaciones y proyectos llave en mano.</p>
+<div class="timeline-item">
+<h3>Education</h3>
+<div class="timeline-content">
+<p>Industrial Engineering (Wirtschaftsingenieurwesen Maschinenbau)</p>
+<p>Technische Universität Braunschweig</p>
+<p>Academic Excellence: Top grades</p>
 </div>
-<div class="service-card">
-<h3>Remodelaciones</h3>
-<p>Renovación de interiores, cocinas, baños y espacios comerciales.</p>
 </div>
-<div class="service-card">
-<h3>Obras Comerciales</h3>
-<p>Locales, oficinas y desarrollos empresariales.</p>
+
+<div class="timeline-item">
+<h3>Exchange Semesters</h3>
+<div class="timeline-content">
+<p>Portugal – Instituto Superior de Engenharia do Porto</p>
+<p>International academic programs across Europe</p>
 </div>
-<div class="service-card">
-<h3>Dirección Técnica</h3>
-<p>Supervisión profesional y gestión integral de obra.</p>
 </div>
+
+<div class="timeline-item">
+<h3>Internships & Experience</h3>
+<div class="timeline-content">
+<p>Bosch – Industrial Operations & Engineering</p>
+<p>Mathematics Tutor</p>
+<p>Strategic & analytical project work</p>
+</div>
+</div>
+
 </div>
 </section>
 
-<section class="form-section" id="cotizacion">
-<h2 style="text-align:center; margin-bottom:40px;">Solicitar Estimación de Precio</h2>
-<div class="form-container">
-<form>
-<input type="text" placeholder="Nombre Completo" required>
-<input type="email" placeholder="Correo Electrónico" required>
-<input type="tel" placeholder="Teléfono">
-<select required>
-<option value="">Tipo de Proyecto</option>
-<option>Construcción Nueva</option>
-<option>Remodelación</option>
-<option>Obra Comercial</option>
-<option>Ampliación</option>
-</select>
-<textarea rows="4" placeholder="Describa brevemente su proyecto"></textarea>
-<button type="submit">Enviar Solicitud</button>
-</form>
+<section id="international">
+<h2>International Experience</h2>
+<p>Hover over a country to see details.</p>
+
+<div class="map-container">
+<svg viewBox="0 0 800 400">
+<rect class="country" x="350" y="120" width="80" height="60" data-info="Germany – 20+ years (Home & Academic Base)"/>
+<rect class="country" x="330" y="180" width="70" height="50" data-info="Portugal – 6 months (Exchange Semester)"/>
+<rect class="country" x="150" y="200" width="90" height="60" data-info="Argentina – Cultural & Family Background"/>
+</svg>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+</section>
+
+<section id="publications">
+<h2>Research & Publications</h2>
+
+<div class="card publication-card">
+<h3>Optimization of Sustainable Travel Systems (2024)</h3>
+<div class="abstract">
+<p>Research on minimizing CO₂ emissions through optimized conference location modeling and multi-modal transport integration.</p>
+</div>
+</div>
+
+<div class="card publication-card">
+<h3>Strategic Modeling in Industrial Networks (2023)</h3>
+<div class="abstract">
+<p>Mathematical framework analyzing efficiency and constraint optimization in distributed industrial systems.</p>
+</div>
+</div>
+
+</section>
+
+<section id="hobbies">
+<h2>Beyond Work</h2>
+<div class="hobbies">
+<div class="hobby">Entrepreneurship</div>
+<div class="hobby">Strategy & Psychology</div>
+<div class="hobby">International Exchange</div>
+<div class="hobby">Sports</div>
+<div class="hobby">Travel</div>
+<div class="hobby">Technology</div>
 </div>
 </section>
 
 <footer>
-© 2026 Constructora Tucumán | San Miguel de Tucumán, Argentina
+© 2026 Álvaro Rohde García
 </footer>
+
+<script>
+// Timeline toggle
+document.querySelectorAll('.timeline-item').forEach(item=>{
+item.addEventListener('click',()=>{
+item.classList.toggle('active');
+});
+});
+
+// Map tooltip
+const tooltip=document.getElementById('tooltip');
+document.querySelectorAll('.country').forEach(country=>{
+country.addEventListener('mousemove',(e)=>{
+tooltip.style.opacity=1;
+tooltip.innerText=country.getAttribute('data-info');
+tooltip.style.left=e.pageX+15+'px';
+tooltip.style.top=e.pageY+15+'px';
+});
+country.addEventListener('mouseleave',()=>{
+tooltip.style.opacity=0;
+});
+});
+</script>
 
 </body>
 </html>
