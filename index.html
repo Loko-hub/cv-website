@@ -9,7 +9,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif}
 body{background:#f5f7fa;color:#1a1a1a;overflow-x:hidden}
-section{padding:100px 12%;min-height:80vh}
+section{padding:100px 12%;min-height:70vh}
 h1{font-size:3rem;font-weight:800;margin-bottom:20px}
 h2{font-size:2rem;margin-bottom:30px}
 p{line-height:1.7;margin-bottom:15px}
@@ -23,18 +23,6 @@ p{line-height:1.7;margin-bottom:15px}
 }
 .hero img:hover{transform:scale(1.03)}
 .hero-text{max-width:650px}
-
-button{
-  padding:12px 20px;
-  border:none;
-  background:#0077ff;
-  color:white;
-  border-radius:10px;
-  cursor:pointer;
-  margin-top:20px;
-  transition:0.3s;
-}
-button:hover{background:#005fd1}
 
 .cv-category{
   background:white;
@@ -52,18 +40,36 @@ button:hover{background:#005fd1}
   overflow:hidden;
   transition:max-height 0.6s ease;
 }
-
 .cv-content.open{
-  max-height:1000px;
+  max-height:800px;
   margin-top:20px;
 }
 
-.globe-container{
-  width:100%;
-  height:600px;
+.map-container{
   background:white;
   border-radius:20px;
+  padding:40px;
   box-shadow:0 20px 50px rgba(0,0,0,0.08);
+  position:relative;
+}
+
+svg{
+  width:100%;
+  height:auto;
+}
+
+.country{
+  fill:#d0d7e2;
+  transition:0.3s;
+}
+.country:hover{
+  fill:#0077ff;
+  cursor:pointer;
+}
+
+.marker{
+  fill:#ff4d4d;
+  cursor:pointer;
 }
 
 .tooltip{
@@ -72,9 +78,25 @@ button:hover{background:#005fd1}
   padding:10px 15px;
   border-radius:10px;
   box-shadow:0 10px 25px rgba(0,0,0,0.15);
-  pointer-events:none;
   display:none;
   font-size:0.9rem;
+}
+
+.card-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:30px;
+}
+
+.card{
+  background:white;
+  padding:30px;
+  border-radius:15px;
+  box-shadow:0 15px 40px rgba(0,0,0,0.08);
+  transition:0.4s;
+}
+.card:hover{
+  transform:translateY(-10px);
 }
 
 .fade{
@@ -100,13 +122,13 @@ button:hover{background:#005fd1}
     <h1>Álvaro Rohde García</h1>
     <h2>Industrial Engineer | Strategy | Optimization</h2>
     <p>
-      I am an Industrial Engineering graduate with a strong focus on analytical modeling,
-      sustainability optimization, and strategic system design. My academic journey has
-      consistently been characterized by top-tier performance and international exposure.
+      I am an Industrial Engineering graduate specializing in optimization, sustainability modeling,
+      and strategic systems design. My academic performance and international exposure
+      have shaped a strong analytical mindset combined with execution-driven thinking.
     </p>
     <p>
-      I specialize in translating complex systems into structured, measurable solutions.
-      My ambition is to operate at the intersection of strategy, operations, and scalable impact.
+      My ambition is to operate at the intersection of strategy, operations, and scalable impact —
+      designing systems that create measurable results.
     </p>
   </div>
   <img src="profile.jpg" alt="Profile">
@@ -120,18 +142,15 @@ button:hover{background:#005fd1}
     <h3>Education</h3>
     <div class="cv-content">
       <p><strong>M.Sc. Industrial Engineering</strong> – TU Braunschweig (GPA 1.4)</p>
-      <p>Focus: Optimization, sustainability modeling, systems engineering</p>
-      <br>
       <p><strong>B.Sc. Industrial Engineering</strong> – GPA 1.6</p>
+      <p>Focus: Optimization, sustainability systems, operations research</p>
     </div>
   </div>
 
   <div class="cv-category" onclick="toggleCV(this)">
     <h3>Professional Experience</h3>
     <div class="cv-content">
-      <p><strong>Bosch</strong> – Operational Analytics & Process Optimization</p>
-      <p>Data-driven process improvement & performance modeling</p>
-      <br>
+      <p><strong>Bosch</strong> – Process Optimization & Operational Analytics</p>
       <p><strong>Mathematics Tutor</strong></p>
     </div>
   </div>
@@ -140,21 +159,69 @@ button:hover{background:#005fd1}
     <h3>International Exchange</h3>
     <div class="cv-content">
       <p><strong>Porto, Portugal</strong> – Engineering Semester</p>
-      <p><strong>Additional Exchange Programs</strong></p>
+      <p>Additional exchange programs</p>
     </div>
   </div>
 </section>
 
-<!-- GLOBE -->
+<!-- MAP -->
 <section class="fade">
   <h2>International Experience</h2>
-  <p>Interact with the globe to explore the places I have lived.</p>
-  <div id="globe" class="globe-container"></div>
-  <div id="tooltip" class="tooltip"></div>
+  <div class="map-container">
+    <svg viewBox="0 0 1000 500">
+      <!-- simplified continents -->
+      <rect x="0" y="0" width="1000" height="500" fill="#eef2f7"/>
+      
+      <!-- markers -->
+      <circle class="marker" cx="520" cy="160" r="8"
+        onmouseover="showTooltip(event,'Germany – 20+ years, academic base')"
+        onmouseout="hideTooltip()"/>
+      
+      <circle class="marker" cx="480" cy="210" r="8"
+        onmouseover="showTooltip(event,'Portugal – Exchange semester in Porto')"
+        onmouseout="hideTooltip()"/>
+      
+      <circle class="marker" cx="330" cy="330" r="8"
+        onmouseover="showTooltip(event,'Argentina – Family roots, Tucumán')"
+        onmouseout="hideTooltip()"/>
+    </svg>
+    <div class="tooltip" id="tooltip"></div>
+  </div>
 </section>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<!-- RESEARCH -->
+<section class="fade">
+  <h2>Research & Publications</h2>
+  <div class="card-grid">
+    <div class="card">
+      <h3>Optimization Model for CO₂ Reduction</h3>
+      <p>Mathematical optimization framework minimizing international travel emissions.</p>
+    </div>
+    <div class="card">
+      <h3>Operational Efficiency Analysis</h3>
+      <p>Systems-based study on resource allocation and process optimization.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOBBIES -->
+<section class="fade">
+  <h2>Beyond Work</h2>
+  <div class="card-grid">
+    <div class="card">
+      <h3>Entrepreneurship</h3>
+      <p>Developing digital products and strategic business models.</p>
+    </div>
+    <div class="card">
+      <h3>Strategy & Psychology</h3>
+      <p>Decision-making systems and high-performance thinking.</p>
+    </div>
+    <div class="card">
+      <h3>Sports & Travel</h3>
+      <p>Exploring new environments and maintaining physical discipline.</p>
+    </div>
+  </div>
+</section>
 
 <script>
 /* Scroll Animation */
@@ -173,86 +240,17 @@ function toggleCV(element){
   content.classList.toggle("open");
 }
 
-/* 3D Globe */
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth/600, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(document.getElementById("globe").offsetWidth,600);
-document.getElementById("globe").appendChild(renderer.domElement);
-
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.enableZoom = true;
-controls.enablePan = false;
-
-const geometry = new THREE.SphereGeometry(5, 64, 64);
-const texture = new THREE.TextureLoader().load('https://threejs.org/examples/textures/land_ocean_ice_cloud_2048.jpg');
-const material = new THREE.MeshStandardMaterial({map:texture});
-const globe = new THREE.Mesh(geometry, material);
-scene.add(globe);
-
-const light = new THREE.PointLight(0xffffff,1);
-light.position.set(10,10,10);
-scene.add(light);
-
-camera.position.z = 12;
-
-/* Country markers */
-const locations = [
-  {name:"Germany", lat:51, lon:10, text:"Lived 20+ years – Academic base"},
-  {name:"Portugal", lat:41, lon:-8, text:"Exchange semester – Porto"},
-  {name:"Argentina", lat:-26, lon:-65, text:"Family roots – Tucumán"}
-];
-
-const markerMaterial = new THREE.MeshBasicMaterial({color:0xff0000});
-const markers=[];
-
-locations.forEach(loc=>{
-  const phi = (90-loc.lat)*(Math.PI/180);
-  const theta = (loc.lon+180)*(Math.PI/180);
-  const x = -5*Math.sin(phi)*Math.cos(theta);
-  const y = 5*Math.cos(phi);
-  const z = 5*Math.sin(phi)*Math.sin(theta);
-
-  const marker = new THREE.Mesh(new THREE.SphereGeometry(0.15,16,16), markerMaterial);
-  marker.position.set(x,y,z);
-  marker.userData = loc;
-  scene.add(marker);
-  markers.push(marker);
-});
-
-/* Raycaster for hover */
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-const tooltip = document.getElementById("tooltip");
-
-window.addEventListener("mousemove",event=>{
-  const rect = renderer.domElement.getBoundingClientRect();
-  mouse.x = ((event.clientX-rect.left)/rect.width)*2-1;
-  mouse.y = -((event.clientY-rect.top)/rect.height)*2+1;
-
-  raycaster.setFromCamera(mouse,camera);
-  const intersects = raycaster.intersectObjects(markers);
-
-  if(intersects.length>0){
-    tooltip.style.display="block";
-    tooltip.style.left=event.pageX+10+"px";
-    tooltip.style.top=event.pageY+10+"px";
-    tooltip.innerHTML="<strong>"+intersects[0].object.userData.name+"</strong><br>"+intersects[0].object.userData.text;
-  }else{
-    tooltip.style.display="none";
-  }
-});
-
-function animate(){
-  requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene,camera);
+/* Tooltip */
+function showTooltip(event,text){
+  const tooltip=document.getElementById("tooltip");
+  tooltip.style.display="block";
+  tooltip.style.left=event.pageX+10+"px";
+  tooltip.style.top=event.pageY+10+"px";
+  tooltip.innerHTML=text;
 }
-animate();
-
-window.addEventListener("resize",()=>{
-  renderer.setSize(document.getElementById("globe").offsetWidth,600);
-});
+function hideTooltip(){
+  document.getElementById("tooltip").style.display="none";
+}
 </script>
 
 </body>
