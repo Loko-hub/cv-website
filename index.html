@@ -3,254 +3,181 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Álvaro Rohde García</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-
+<title>Snake Game</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif}
-body{background:#f5f7fa;color:#1a1a1a;overflow-x:hidden}
-section{padding:100px 12%;min-height:70vh}
-h1{font-size:3rem;font-weight:800;margin-bottom:20px}
-h2{font-size:2rem;margin-bottom:30px}
-p{line-height:1.7;margin-bottom:15px}
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #111;
+        color: white;
+        font-family: Arial, sans-serif;
+    }
 
-.hero{display:flex;align-items:center;gap:60px}
-.hero img{
-  width:320px;
-  border-radius:20px;
-  box-shadow:0 20px 60px rgba(0,0,0,0.15);
-  transition:0.4s;
-}
-.hero img:hover{transform:scale(1.03)}
-.hero-text{max-width:650px}
+    canvas {
+        background-color: #222;
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    }
 
-.cv-category{
-  background:white;
-  padding:25px;
-  margin-bottom:20px;
-  border-radius:15px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.08);
-  cursor:pointer;
-  transition:0.3s;
-}
-.cv-category:hover{transform:translateY(-5px)}
+    h1 {
+        margin-bottom: 10px;
+    }
 
-.cv-content{
-  max-height:0;
-  overflow:hidden;
-  transition:max-height 0.6s ease;
-}
-.cv-content.open{
-  max-height:800px;
-  margin-top:20px;
-}
+    #score {
+        margin: 10px;
+        font-size: 18px;
+    }
 
-.map-container{
-  background:white;
-  border-radius:20px;
-  padding:40px;
-  box-shadow:0 20px 50px rgba(0,0,0,0.08);
-  position:relative;
-}
-
-svg{
-  width:100%;
-  height:auto;
-}
-
-.country{
-  fill:#d0d7e2;
-  transition:0.3s;
-}
-.country:hover{
-  fill:#0077ff;
-  cursor:pointer;
-}
-
-.marker{
-  fill:#ff4d4d;
-  cursor:pointer;
-}
-
-.tooltip{
-  position:absolute;
-  background:white;
-  padding:10px 15px;
-  border-radius:10px;
-  box-shadow:0 10px 25px rgba(0,0,0,0.15);
-  display:none;
-  font-size:0.9rem;
-}
-
-.card-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-  gap:30px;
-}
-
-.card{
-  background:white;
-  padding:30px;
-  border-radius:15px;
-  box-shadow:0 15px 40px rgba(0,0,0,0.08);
-  transition:0.4s;
-}
-.card:hover{
-  transform:translateY(-10px);
-}
-
-.fade{
-  opacity:0;
-  transform:translateY(40px);
-  transition:1s ease;
-}
-.fade.visible{
-  opacity:1;
-  transform:translateY(0);
-}
-
-@media(max-width:900px){
-  .hero{flex-direction:column;text-align:center}
-}
+    #restartBtn {
+        margin-top: 10px;
+        padding: 8px 16px;
+        font-size: 14px;
+        cursor: pointer;
+        border: none;
+        background-color: #0f0;
+        color: black;
+        font-weight: bold;
+    }
 </style>
 </head>
 <body>
 
-<!-- HERO -->
-<section class="hero fade">
-  <div class="hero-text">
-    <h1>Álvaro Rohde García</h1>
-    <h2>Industrial Engineer | Strategy | Optimization</h2>
-    <p>
-      I am an Industrial Engineering graduate specializing in optimization, sustainability modeling,
-      and strategic systems design. My academic performance and international exposure
-      have shaped a strong analytical mindset combined with execution-driven thinking.
-    </p>
-    <p>
-      My ambition is to operate at the intersection of strategy, operations, and scalable impact —
-      designing systems that create measurable results.
-    </p>
-  </div>
-  <img src="profile.jpg" alt="Profile">
-</section>
-
-<!-- CV -->
-<section class="fade">
-  <h2>Curriculum Vitae</h2>
-
-  <div class="cv-category" onclick="toggleCV(this)">
-    <h3>Education</h3>
-    <div class="cv-content">
-      <p><strong>M.Sc. Industrial Engineering</strong> – TU Braunschweig (GPA 1.4)</p>
-      <p><strong>B.Sc. Industrial Engineering</strong> – GPA 1.6</p>
-      <p>Focus: Optimization, sustainability systems, operations research</p>
-    </div>
-  </div>
-
-  <div class="cv-category" onclick="toggleCV(this)">
-    <h3>Professional Experience</h3>
-    <div class="cv-content">
-      <p><strong>Bosch</strong> – Process Optimization & Operational Analytics</p>
-      <p><strong>Mathematics Tutor</strong></p>
-    </div>
-  </div>
-
-  <div class="cv-category" onclick="toggleCV(this)">
-    <h3>International Exchange</h3>
-    <div class="cv-content">
-      <p><strong>Porto, Portugal</strong> – Engineering Semester</p>
-      <p>Additional exchange programs</p>
-    </div>
-  </div>
-</section>
-
-<!-- MAP -->
-<section class="fade">
-  <h2>International Experience</h2>
-  <div class="map-container">
-    <svg viewBox="0 0 1000 500">
-      <!-- simplified continents -->
-      <rect x="0" y="0" width="1000" height="500" fill="#eef2f7"/>
-      
-      <!-- markers -->
-      <circle class="marker" cx="520" cy="160" r="8"
-        onmouseover="showTooltip(event,'Germany – 20+ years, academic base')"
-        onmouseout="hideTooltip()"/>
-      
-      <circle class="marker" cx="480" cy="210" r="8"
-        onmouseover="showTooltip(event,'Portugal – Exchange semester in Porto')"
-        onmouseout="hideTooltip()"/>
-      
-      <circle class="marker" cx="330" cy="330" r="8"
-        onmouseover="showTooltip(event,'Argentina – Family roots, Tucumán')"
-        onmouseout="hideTooltip()"/>
-    </svg>
-    <div class="tooltip" id="tooltip"></div>
-  </div>
-</section>
-
-<!-- RESEARCH -->
-<section class="fade">
-  <h2>Research & Publications</h2>
-  <div class="card-grid">
-    <div class="card">
-      <h3>Optimization Model for CO₂ Reduction</h3>
-      <p>Mathematical optimization framework minimizing international travel emissions.</p>
-    </div>
-    <div class="card">
-      <h3>Operational Efficiency Analysis</h3>
-      <p>Systems-based study on resource allocation and process optimization.</p>
-    </div>
-  </div>
-</section>
-
-<!-- HOBBIES -->
-<section class="fade">
-  <h2>Beyond Work</h2>
-  <div class="card-grid">
-    <div class="card">
-      <h3>Entrepreneurship</h3>
-      <p>Developing digital products and strategic business models.</p>
-    </div>
-    <div class="card">
-      <h3>Strategy & Psychology</h3>
-      <p>Decision-making systems and high-performance thinking.</p>
-    </div>
-    <div class="card">
-      <h3>Sports & Travel</h3>
-      <p>Exploring new environments and maintaining physical discipline.</p>
-    </div>
-  </div>
-</section>
+<h1>Snake Game</h1>
+<div id="score">Score: 0</div>
+<canvas id="gameCanvas" width="400" height="400"></canvas>
+<button id="restartBtn">Restart</button>
 
 <script>
-/* Scroll Animation */
-const observer = new IntersectionObserver(entries=>{
-  entries.forEach(entry=>{
-    if(entry.isIntersecting){
-      entry.target.classList.add("visible");
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const gridSize = 20;
+const tileCount = canvas.width / gridSize;
+
+let snake = [{ x: 10, y: 10 }];
+let velocityX = 0;
+let velocityY = 0;
+let food = { x: 5, y: 5 };
+let score = 0;
+let gameOver = false;
+
+const scoreDisplay = document.getElementById("score");
+const restartBtn = document.getElementById("restartBtn");
+
+document.addEventListener("keydown", changeDirection);
+restartBtn.addEventListener("click", resetGame);
+
+function gameLoop() {
+    if (gameOver) return;
+
+    update();
+    draw();
+    setTimeout(gameLoop, 100);
+}
+
+function update() {
+    const head = {
+        x: snake[0].x + velocityX,
+        y: snake[0].y + velocityY
+    };
+
+    // Wall collision
+    if (head.x < 0 || head.x >= tileCount ||
+        head.y < 0 || head.y >= tileCount) {
+        endGame();
+        return;
     }
-  });
-});
-document.querySelectorAll(".fade").forEach(el=>observer.observe(el));
 
-/* CV Toggle */
-function toggleCV(element){
-  const content = element.querySelector(".cv-content");
-  content.classList.toggle("open");
+    // Self collision
+    for (let segment of snake) {
+        if (segment.x === head.x && segment.y === head.y) {
+            endGame();
+            return;
+        }
+    }
+
+    snake.unshift(head);
+
+    // Food collision
+    if (head.x === food.x && head.y === food.y) {
+        score++;
+        scoreDisplay.textContent = "Score: " + score;
+        placeFood();
+    } else {
+        snake.pop();
+    }
 }
 
-/* Tooltip */
-function showTooltip(event,text){
-  const tooltip=document.getElementById("tooltip");
-  tooltip.style.display="block";
-  tooltip.style.left=event.pageX+10+"px";
-  tooltip.style.top=event.pageY+10+"px";
-  tooltip.innerHTML=text;
+function draw() {
+    ctx.fillStyle = "#222";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#0f0";
+    for (let segment of snake) {
+        ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
+    }
+
+    ctx.fillStyle = "red";
+    ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
 }
-function hideTooltip(){
-  document.getElementById("tooltip").style.display="none";
+
+function changeDirection(event) {
+    switch (event.key) {
+        case "ArrowUp":
+            if (velocityY === 1) break;
+            velocityX = 0;
+            velocityY = -1;
+            break;
+        case "ArrowDown":
+            if (velocityY === -1) break;
+            velocityX = 0;
+            velocityY = 1;
+            break;
+        case "ArrowLeft":
+            if (velocityX === 1) break;
+            velocityX = -1;
+            velocityY = 0;
+            break;
+        case "ArrowRight":
+            if (velocityX === -1) break;
+            velocityX = 1;
+            velocityY = 0;
+            break;
+    }
 }
+
+function placeFood() {
+    food.x = Math.floor(Math.random() * tileCount);
+    food.y = Math.floor(Math.random() * tileCount);
+
+    // Avoid spawning on snake
+    for (let segment of snake) {
+        if (segment.x === food.x && segment.y === food.y) {
+            placeFood();
+        }
+    }
+}
+
+function endGame() {
+    gameOver = true;
+    alert("Game Over! Final Score: " + score);
+}
+
+function resetGame() {
+    snake = [{ x: 10, y: 10 }];
+    velocityX = 0;
+    velocityY = 0;
+    score = 0;
+    scoreDisplay.textContent = "Score: 0";
+    gameOver = false;
+    placeFood();
+    gameLoop();
+}
+
+gameLoop();
 </script>
 
 </body>
