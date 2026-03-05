@@ -2,236 +2,205 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Álvaro Rohde García</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Mini Age of War - Animated Enhanced</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif}
-body{background:#f5f7fa;color:#1a1a1a;overflow-x:hidden}
-section{padding:100px 12%;min-height:70vh}
-h1{font-size:3rem;font-weight:800;margin-bottom:20px}
-h2{font-size:2rem;margin-bottom:30px}
-p{line-height:1.7;margin-bottom:15px}
-
-.hero{display:flex;align-items:center;gap:60px}
-.hero img{
-  width:320px;
-  border-radius:20px;
-  box-shadow:0 20px 60px rgba(0,0,0,0.15);
-  transition:0.4s;
-}
-.hero img:hover{transform:scale(1.03)}
-.hero-text{max-width:650px}
-
-.cv-category{
-  background:white;
-  padding:25px;
-  margin-bottom:20px;
-  border-radius:15px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.08);
-  cursor:pointer;
-  transition:0.3s;
-}
-.cv-category:hover{transform:translateY(-5px)}
-
-.cv-content{
-  max-height:0;
-  overflow:hidden;
-  transition:max-height 0.6s ease;
-}
-.cv-content.open{
-  max-height:800px;
-  margin-top:20px;
-}
-
-.map-container{
-  background:white;
-  border-radius:20px;
-  padding:40px;
-  box-shadow:0 20px 50px rgba(0,0,0,0.08);
-  position:relative;
-}
-
-svg{
-  width:100%;
-  height:auto;
-}
-
-.country{
-  fill:#d0d7e2;
-  transition:0.3s;
-}
-.country:hover{
-  fill:#0077ff;
-  cursor:pointer;
-}
-
-.marker{
-  fill:#ff4d4d;
-  cursor:pointer;
-}
-
-.tooltip{
-  position:absolute;
-  background:white;
-  padding:10px 15px;
-  border-radius:10px;
-  box-shadow:0 10px 25px rgba(0,0,0,0.15);
-  display:none;
-  font-size:0.9rem;
-}
-
-.card-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-  gap:30px;
-}
-
-.card{
-  background:white;
-  padding:30px;
-  border-radius:15px;
-  box-shadow:0 15px 40px rgba(0,0,0,0.08);
-  transition:0.4s;
-}
-.card:hover{
-  transform:translateY(-10px);
-}
-
-.fade{
-  opacity:0;
-  transform:translateY(40px);
-  transition:1s ease;
-}
-.fade.visible{
-  opacity:1;
-  transform:translateY(0);
-}
-
-@media(max-width:900px){
-  .hero{flex-direction:column;text-align:center}
-}
+html, body { margin:0; padding:0; overflow:hidden; background:#0b0f1a; font-family:Arial,sans-serif; touch-action:none; }
+canvas { display:block; }
+#ui { position:fixed; top:0; width:100%; padding:10px; background:rgba(0,0,0,0.7); display:flex; justify-content:space-between; align-items:center; box-sizing:border-box; color:#00ffff; font-size:14px; }
+button { background:#00ffff22; border:1px solid #00ffff; color:#00ffff; padding:6px 10px; border-radius:6px; margin-left:5px; font-size:14px; }
+button:active { background:#00ffff55; }
+#gameOverScreen { position:fixed; top:0; left:0; width:100%; height:100%; background:#000c; display:flex; flex-direction:column; justify-content:center; align-items:center; font-size:28px; display:none; color:#00ffff; }
 </style>
 </head>
 <body>
+<div id="ui">
+<div>💰 Gold: <span id="gold">100</span> | 🏰 HP: <span id="playerHP">1000</span> vs <span id="enemyHP">1000</span></div>
+<div>
+<button onclick="spawnUnit('warrior')">Warrior (10)</button>
+<button onclick="spawnUnit('archer')">Archer (20)</button>
+<button onclick="spawnUnit('tank')">Tank (50)</button>
+<button id="weaponButton" onclick="buyOrUpgradeWeapon()">Buy Weapon (30)</button>
+</div>
+</div>
 
-<!-- HERO -->
-<section class="hero fade">
-  <div class="hero-text">
-    <h1>Álvaro Rohde García</h1>
-    <h2>Industrial Engineer | Strategy | Optimization</h2>
-    <p>
-      I am an Industrial Engineering graduate specializing in optimization, sustainability modeling,
-      and strategic systems design. My academic performance and international exposure
-      have shaped a strong analytical mindset combined with execution-driven thinking.
-    </p>
-    <p>
-      My ambition is to operate at the intersection of strategy, operations, and scalable impact —
-      designing systems that create measurable results.
-    </p>
-  </div>
-  <img src="profile.jpg" alt="Profile">
-</section>
+<div id="gameOverScreen">
+<div id="gameOverText"></div>
+<button onclick="restartGame()">Restart</button>
+</div>
 
-<!-- CV -->
-<section class="fade">
-  <h2>Curriculum Vitae</h2>
-
-  <div class="cv-category" onclick="toggleCV(this)">
-    <h3>Education</h3>
-    <div class="cv-content">
-      <p><strong>M.Sc. Industrial Engineering</strong> – TU Braunschweig (GPA 1.4)</p>
-      <p><strong>B.Sc. Industrial Engineering</strong> – GPA 1.6</p>
-      <p>Focus: Optimization, sustainability systems, operations research</p>
-    </div>
-  </div>
-
-  <div class="cv-category" onclick="toggleCV(this)">
-    <h3>Professional Experience</h3>
-    <div class="cv-content">
-      <p><strong>Bosch</strong> – Process Optimization & Operational Analytics</p>
-      <p><strong>Mathematics Tutor</strong></p>
-    </div>
-  </div>
-</section>
-
-function showTooltip(event,title,text){
-  const tooltip=document.getElementById("tooltip");
-  tooltip.style.display="block";
-  tooltip.style.left=event.pageX+15+"px";
-  tooltip.style.top=event.pageY+15+"px";
-  tooltip.innerHTML="<strong>"+title+"</strong><br>"+text;
-}
-
-document.addEventListener("click",function(e){
-  if(!e.target.classList.contains("marker")){
-    document.getElementById("tooltip").style.display="none";
-  }
-});
-
-<!-- RESEARCH -->
-<section class="fade">
-  <h2>Research & Publications</h2>
-  <div class="card-grid">
-    <div class="card">
-      <h3>Optimization Model for CO₂ Reduction</h3>
-      <p>Mathematical optimization framework minimizing international travel emissions.</p>
-    </div>
-    <div class="card">
-      <h3>Operational Efficiency Analysis</h3>
-      <p>Systems-based study on resource allocation and process optimization.</p>
-    </div>
-  </div>
-</section>
-
-<!-- HOBBIES -->
-<section class="fade">
-  <h2>Beyond Work</h2>
-  <div class="card-grid">
-    <div class="card">
-      <h3>Entrepreneurship</h3>
-      <p>Developing digital products and strategic business models.</p>
-    </div>
-    <div class="card">
-      <h3>Strategy & Psychology</h3>
-      <p>Decision-making systems and high-performance thinking.</p>
-    </div>
-    <div class="card">
-      <h3>Sports & Travel</h3>
-      <p>Exploring new environments and maintaining physical discipline.</p>
-    </div>
-  </div>
-</section>
+<canvas id="game"></canvas>
 
 <script>
-/* Scroll Animation */
-const observer = new IntersectionObserver(entries=>{
-  entries.forEach(entry=>{
-    if(entry.isIntersecting){
-      entry.target.classList.add("visible");
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+resize(); window.addEventListener("resize", resize);
+
+let gold=100, playerBaseHP=1000, enemyBaseHP=1000, units=[], projectiles=[], gameOver=false;
+let weaponPurchased=false, weaponLevel=0, weaponCooldown=0;
+const groundY=()=>canvas.height*0.85;
+let weapon={damage:20, range:canvas.width*0.2, color:'#0ff'};
+
+const types={
+warrior:{hp:120,damage:12,speed:canvas.width*0.0007,range:canvas.width*0.02,cost:10,reward:10,color:'#0f0'},
+archer:{hp:70,damage:8,speed:canvas.width*0.0006,range:canvas.width*0.08,cost:20,reward:20,color:'#0ff'},
+tank:{hp:350,damage:30,speed:canvas.width*0.0004,range:canvas.width*0.025,cost:50,reward:40,color:'#f33'}
+};
+
+class Projectile {
+    constructor(x,y,target,damage,color){ this.x=x; this.y=y; this.target=target; this.damage=damage; this.color=color; }
+    update(){ if(this.target){ const dx=this.target.x-this.x; const dy=this.target.y-this.y; const dist=Math.hypot(dx,dy); if(dist<5){ this.target.hp-=this.damage; if(this.target.hp<=0 && this.target.side==='enemy'){ gold+=this.target.stats.reward; units=units.filter(u=>u!==this.target); updateUI(); } return true; } this.x+=dx*0.05; this.y+=dy*0.05; } return false; }
+    draw(){ ctx.fillStyle=this.color; ctx.beginPath(); ctx.arc(this.x,this.y,5,0,Math.PI*2); ctx.fill(); }
+}
+
+class Unit {
+    constructor(type, side){
+        this.type=type; this.side=side; this.stats=types[type]; this.hp=this.stats.hp;
+        this.x=side==='player'? canvas.width*0.12 : canvas.width*0.88;
+        this.y=groundY();
+        this.atBase=false;
+        this.step=0;
+        this.attackCooldown=0;
     }
-  });
-});
-document.querySelectorAll(".fade").forEach(el=>observer.observe(el));
 
-/* CV Toggle */
-function toggleCV(element){
-  const content = element.querySelector(".cv-content");
-  content.classList.toggle("open");
+    update(prevUnit){
+        if(gameOver) return;
+        const spacing=canvas.width*0.04;
+        if(prevUnit && this.side===prevUnit.side){
+            if(this.side==='player'){ if(this.x + spacing > prevUnit.x) return; }
+            else{ if(this.x - spacing < prevUnit.x) return; }
+        }
+
+        let target=null;
+        if(!this.atBase){
+            target=units.find(u=>u.side!==this.side && Math.abs(u.x-this.x)<=this.stats.range);
+            if(target){
+                this.attackCooldown-=16;
+                if(this.attackCooldown<=0){ target.hp-=this.stats.damage; this.attackCooldown=200; }
+                if(target.hp<=0){ if(target.side==='enemy') gold+=target.stats.reward; units=units.filter(u=>u!==target); updateUI(); }
+            }else{ this.x += this.side==='player'? this.stats.speed : -this.stats.speed; }
+        }
+
+        const playerBaseX = canvas.width-100; const enemyBaseX = 40+60;
+        if(this.side==='player' && this.x>=playerBaseX-30){this.x=playerBaseX-30; this.atBase=true;}
+        if(this.side==='enemy' && this.x<=enemyBaseX){this.x=enemyBaseX; this.atBase=true;}
+
+        if(this.atBase){
+            if(this.side==='player') enemyBaseHP -= this.stats.damage*0.05;
+            else playerBaseHP -= this.stats.damage*0.05;
+        }
+
+        this.step +=0.2;
+    }
+
+    draw(){
+        const unitWidth=canvas.width*0.02; const unitHeight=canvas.height*0.06;
+        const legSwing=Math.sin(this.step)*unitHeight*0.3;
+        ctx.strokeStyle=this.stats.color; ctx.lineWidth=2;
+        // Legs
+        ctx.beginPath();
+        ctx.moveTo(this.x,this.y);
+        ctx.lineTo(this.x - unitWidth/2, this.y + unitHeight/2 + legSwing);
+        ctx.moveTo(this.x,this.y);
+        ctx.lineTo(this.x + unitWidth/2, this.y + unitHeight/2 - legSwing);
+        ctx.stroke();
+        // Torso
+        ctx.fillStyle=this.stats.color;
+        ctx.fillRect(this.x-unitWidth/2, this.y-unitHeight, unitWidth, unitHeight*0.7);
+        // Head
+        ctx.beginPath(); ctx.arc(this.x, this.y-unitHeight, unitWidth/2,0,Math.PI*2); ctx.fill();
+        // Weapon animation
+        if(this.type==='warrior'){ ctx.strokeStyle='#fff'; ctx.beginPath(); ctx.moveTo(this.x,this.y-unitHeight*0.5); ctx.lineTo(this.x+Math.sin(this.step)*unitWidth,this.y-unitHeight*0.5); ctx.stroke(); }
+        if(this.type==='archer'){ ctx.strokeStyle='#ff0'; ctx.beginPath(); ctx.moveTo(this.x,this.y-unitHeight*0.5); ctx.lineTo(this.x+Math.sin(this.step)*unitWidth*0.8,this.y-unitHeight*0.5); ctx.stroke(); 
+            if(Math.floor(this.step)%60===0){ let arrow=new Projectile(this.x,this.y-unitHeight*0.5,units.filter(u=>u.side==='enemy').sort((a,b)=>Math.abs(a.x-this.x)-Math.abs(b.x-this.x))[0],this.stats.damage,'#ff0'); if(arrow.target) projectiles.push(arrow); } }
+        if(this.type==='tank'){ ctx.strokeStyle='#fff'; ctx.beginPath(); ctx.moveTo(this.x,this.y-unitHeight*0.5); ctx.lineTo(this.x+Math.sin(this.step)*unitWidth*0.5,this.y-unitHeight*0.5); ctx.stroke(); }
+        // Health bar
+        ctx.fillStyle='red'; ctx.fillRect(this.x-unitWidth, this.y-unitHeight-10, unitWidth*2,4);
+        ctx.fillStyle='lime'; ctx.fillRect(this.x-unitWidth, this.y-unitHeight-10, unitWidth*2*(this.hp/this.stats.hp),4);
+    }
 }
 
-/* Tooltip */
-function showTooltip(event,text){
-  const tooltip=document.getElementById("tooltip");
-  tooltip.style.display="block";
-  tooltip.style.left=event.pageX+10+"px";
-  tooltip.style.top=event.pageY+10+"px";
-  tooltip.innerHTML=text;
+function spawnUnit(type){ if(gameOver) return; if(gold>=types[type].cost){ gold-=types[type].cost; units.push(new Unit(type,'player')); updateUI(); } }
+
+function buyOrUpgradeWeapon(){
+    if(gameOver) return;
+    const btn=document.getElementById('weaponButton');
+    if(!weaponPurchased){
+        if(gold>=30){ gold-=30; weaponPurchased=true; weaponLevel=0; updateWeaponButton(); updateUI(); }
+    } else {
+        if(weaponLevel===0 && gold>=50){ gold-=50; weapon.damage+=15; weaponLevel++; weapon.range=canvas.width*0.3; weapon.color='#0aff'; updateWeaponButton(); updateUI(); }
+        else if(weaponLevel===1 && gold>=100){ gold-=100; weapon.damage+=20; weaponLevel++; weapon.range=canvas.width*0.4; weapon.color='#0f0'; updateWeaponButton(); updateUI(); }
+        else if(weaponLevel===2 && gold>=200){ gold-=200; weaponLevel++; weapon.range=canvas.width*0.5; weapon.color='#ff0'; updateWeaponButton(); updateUI(); }
+    }
 }
-function hideTooltip(){
-  document.getElementById("tooltip").style.display="none";
+
+function updateWeaponButton(){
+    const btn=document.getElementById('weaponButton');
+    if(!weaponPurchased){ btn.textContent='Buy Weapon (30)'; return; }
+    if(weaponLevel===0) btn.textContent='Upgrade Weapon (50)';
+    else if(weaponLevel===1) btn.textContent='Upgrade Weapon (100)';
+    else if(weaponLevel===2) btn.textContent='Upgrade Weapon (200)';
+    else btn.style.display='none';
 }
+
+function spawnEnemy(){ if(gameOver) return; let r=Math.random(), type; if(r<0.5) type='warrior'; else if(r<0.8) type='archer'; else type='tank'; units.push(new Unit(type,'enemy')); }
+setInterval(spawnEnemy,3000);
+
+function updateUI(){ document.getElementById('gold').textContent=Math.floor(gold); document.getElementById('playerHP').textContent=Math.floor(playerBaseHP); document.getElementById('enemyHP').textContent=Math.floor(enemyBaseHP); }
+function checkGameOver(){ if(playerBaseHP<=0 || enemyBaseHP<=0){ gameOver=true; document.getElementById('gameOverScreen').style.display='flex'; document.getElementById('gameOverText').textContent=playerBaseHP<=0?'Defeat':'Victory'; } }
+
+function drawBases(){
+    const baseWidth=canvas.width*0.06; const baseHeight=canvas.height*0.08;
+    // Player base
+    ctx.fillStyle='#00ffff'; ctx.fillRect(40, groundY()-baseHeight, baseWidth, baseHeight);
+    ctx.fillStyle='#00ffff33'; ctx.fillRect(40+baseWidth*0.1, groundY()-baseHeight*0.9, baseWidth*0.8, baseHeight*0.2); // roof
+    // Weapon turret and range
+    if(weaponPurchased){
+        ctx.save(); ctx.translate(40+baseWidth/2, groundY()-baseHeight);
+        let nearest=units.filter(u=>u.side==='enemy' && u.x<40+weapon.range).sort((a,b)=>Math.abs(a.x-(40+baseWidth/2))-Math.abs(b.x-(40+baseWidth/2)))[0];
+        let angle=0; if(nearest) angle=Math.atan2(nearest.y-(groundY()-baseHeight), nearest.x-(40+baseWidth/2));
+        ctx.rotate(angle);
+        ctx.fillStyle=weapon.color; ctx.fillRect(0,-baseHeight*0.08, baseWidth*0.8, baseHeight*0.16); ctx.restore();
+        // Range visualization
+        ctx.strokeStyle=weapon.color+'44'; ctx.beginPath(); ctx.arc(40+baseWidth/2, groundY()-baseHeight, weapon.range, -0.1, 0.1); ctx.stroke();
+    }
+    // Enemy base
+    ctx.fillStyle='#ff3c7c'; ctx.fillRect(canvas.width-100, groundY()-baseHeight, baseWidth, baseHeight);
+    ctx.fillStyle='#ff3c7c33'; ctx.fillRect(canvas.width-100+baseWidth*0.1, groundY()-baseHeight*0.9, baseWidth*0.8, baseHeight*0.2);
+}
+
+function fireWeapon(){
+    if(!weaponPurchased) return; weaponCooldown-=16;
+    if(weaponCooldown<=0){
+        let nearest=units.filter(u=>u.side==='enemy' && u.x<40+weapon.range).sort((a,b)=>Math.abs(a.x-70)-Math.abs(b.x-70))[0];
+        if(nearest){ let proj=new Projectile(40+canvas.width*0.06/2, groundY()-canvas.height*0.08, nearest, weapon.damage, weapon.color); projectiles.push(proj); weaponCooldown=300; }
+    }
+}
+
+function updateProjectiles(){
+    projectiles=projectiles.filter(p=>!p.update());
+    projectiles.forEach(p=>p.draw());
+}
+
+function gameLoop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawBases();
+    for(let i=0;i<units.length;i++){ units[i].update(units[i-1]); }
+    units.forEach(u=>u.draw());
+    fireWeapon(); updateProjectiles();
+    updateUI(); checkGameOver();
+    requestAnimationFrame(gameLoop);
+}
+
+function restartGame(){
+    gold=100; playerBaseHP=1000; enemyBaseHP=1000; units=[]; projectiles=[]; gameOver=false;
+    weaponPurchased=false; weaponLevel=0; weaponCooldown=0;
+    const btn=document.getElementById('weaponButton'); btn.style.display='inline'; updateWeaponButton();
+    document.getElementById('gameOverScreen').style.display='none'; updateUI();
+}
+
+updateUI(); gameLoop();
 </script>
 
 </body>
